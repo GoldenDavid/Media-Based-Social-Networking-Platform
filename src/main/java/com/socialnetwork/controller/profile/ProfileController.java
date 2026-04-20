@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.socialnetwork.dto.BaseResponse;
 import com.socialnetwork.dto.ProfileDto;
 import com.socialnetwork.dto.UserPrincipal;
 import com.socialnetwork.dto.profile.GetProfileResponse;
@@ -39,23 +40,23 @@ public class ProfileController {
   }
 
   @PostMapping()
-  public ResponseEntity<UpdateProfileResponse> updateProfile(
+  public ResponseEntity<BaseResponse<UpdateProfileResponse>> updateProfile(
       @Valid @RequestBody UpdateProfileRequest request, Authentication authentication) {
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
     ProfileDto profile = profileService.updateProfile(userPrincipal, request);
-    return ResponseEntity.ok().body(UpdateProfileResponse.builder().profile(profile).build());
+    return ResponseEntity.ok().body(BaseResponse.ok(UpdateProfileResponse.builder().profile(profile).build()));
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<GetProfileResponse> getProfile(@PathVariable int id) {
+  public ResponseEntity<BaseResponse<GetProfileResponse>> getProfile(@PathVariable int id) {
     ProfileDto profile = profileService.getUserProfile(id);
-    return ResponseEntity.ok().body(GetProfileResponse.builder().profile(profile).build());
+    return ResponseEntity.ok().body(BaseResponse.ok(GetProfileResponse.builder().profile(profile).build()));
   }
 
   @GetMapping("/me")
-  public ResponseEntity<GetProfileResponse> getProfile(Authentication authentication) {
+  public ResponseEntity<BaseResponse<GetProfileResponse>> getProfile(Authentication authentication) {
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
     ProfileDto profile = profileService.getUserProfile(userPrincipal);
-    return ResponseEntity.ok().body(GetProfileResponse.builder().profile(profile).build());
+    return ResponseEntity.ok().body(BaseResponse.ok(GetProfileResponse.builder().profile(profile).build()));
   }
 }
