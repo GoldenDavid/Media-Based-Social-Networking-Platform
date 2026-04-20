@@ -20,10 +20,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 public class FollowerServiceImpl implements FollowerService {
-  @Autowired
-  private ProfileService profileService;
-  @Autowired
-  private FollowerRepository followerRepository;
+  private final ProfileService profileService;
+  private final FollowerRepository followerRepository;
+
+  public FollowerServiceImpl(ProfileService profileService, FollowerRepository followerRepository) {
+    this.profileService = profileService;
+    this.followerRepository = followerRepository;
+  }
 
   @Override
   public void folowUser(UserPrincipal userPrincipal, int profileId) {
