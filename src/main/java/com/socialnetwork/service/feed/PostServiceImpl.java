@@ -51,6 +51,7 @@ public class PostServiceImpl implements PostService {
     post.setCreatedBy(profile);
     post.setImageUrl(url);
     postRepository.save(post);
+    log.info("Created post with id: {} by user: {}", post.getId(), profile.getUsername());
 
     rabbitTemplate.convertAndSend(MessageQueueConfig.AFTER_CREATE_POST_QUEUE, post.getId());
 
@@ -73,9 +74,11 @@ public class PostServiceImpl implements PostService {
     Profile profile = profileService.getUserProfile(userPrincipal);
     Post post = getPostEntity(postId);
     if (post.getCreatedBy().getId() != profile.getId()) {
+      log.warn("User {} tried to delete post {} without permission", profile.getUsername(), postId);
       throw new NoPermissionException();
     }
     postRepository.delete(post);
+    log.info("Deleted post with id: {}", postId);
   }
 
   @Override
@@ -85,6 +88,7 @@ public class PostServiceImpl implements PostService {
     Post post = getPostEntity(postId);
     post.getUserLikes().add(profile);
     postRepository.save(post);
+    log.info("User {} liked post {}", profile.getUsername(), postId);
 
     return MapperUtils.toDto(post);
   }
