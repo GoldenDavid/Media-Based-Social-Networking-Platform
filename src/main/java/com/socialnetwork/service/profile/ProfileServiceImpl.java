@@ -15,10 +15,13 @@ import com.socialnetwork.service.UploadService;
 
 @Service
 public class ProfileServiceImpl implements ProfileService {
-  @Autowired
-  private UploadService uploadService;
-  @Autowired
-  private ProfileRepository profileRepository;
+  private final UploadService uploadService;
+  private final ProfileRepository profileRepository;
+
+  public ProfileServiceImpl(UploadService uploadService, ProfileRepository profileRepository) {
+    this.uploadService = uploadService;
+    this.profileRepository = profileRepository;
+  }
 
   @Override
   public Profile getUserProfile(UserPrincipal userPrincipal) {
