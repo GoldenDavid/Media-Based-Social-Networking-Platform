@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.socialnetwork.dto.BaseResponse;
 import com.socialnetwork.dto.PostDto;
 import com.socialnetwork.dto.UserPrincipal;
 import com.socialnetwork.dto.feed.CreatePostRequest;
@@ -34,17 +35,17 @@ public class PostController {
   private final PostService postService;
 
   @PostMapping()
-  public ResponseEntity<CreatePostResponse> createPost(
+  public ResponseEntity<BaseResponse<CreatePostResponse>> createPost(
       @Valid @RequestBody CreatePostRequest request, Authentication authentication) {
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
     PostDto post = postService.createPost(userPrincipal, request);
-    return ResponseEntity.ok().body(CreatePostResponse.builder().post(post).build());
+    return ResponseEntity.ok().body(BaseResponse.ok(CreatePostResponse.builder().post(post).build()));
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<GetPostResponse> getPost(@PathVariable int id) {
+  public ResponseEntity<BaseResponse<GetPostResponse>> getPost(@PathVariable int id) {
     PostDto post = postService.getPost(id);
-    return ResponseEntity.ok().body(GetPostResponse.builder().post(post).build());
+    return ResponseEntity.ok().body(BaseResponse.ok(GetPostResponse.builder().post(post).build()));
   }
 
   @DeleteMapping("/{id}")
@@ -55,22 +56,22 @@ public class PostController {
   }
 
   @PostMapping("/like/{id}")
-  public ResponseEntity<GetPostResponse> likePost(@PathVariable int id, Authentication authentication) {
+  public ResponseEntity<BaseResponse<GetPostResponse>> likePost(@PathVariable int id, Authentication authentication) {
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
     PostDto post = postService.likePost(userPrincipal, id);
-    return ResponseEntity.ok().body(GetPostResponse.builder().post(post).build());
+    return ResponseEntity.ok().body(BaseResponse.ok(GetPostResponse.builder().post(post).build()));
   }
 
   @DeleteMapping("/like/{id}")
-  public ResponseEntity<GetPostResponse> unlikePost(@PathVariable int id, Authentication authentication) {
+  public ResponseEntity<BaseResponse<GetPostResponse>> unlikePost(@PathVariable int id, Authentication authentication) {
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
     PostDto post = postService.unlikePost(userPrincipal, id);
-    return ResponseEntity.ok().body(GetPostResponse.builder().post(post).build());
+    return ResponseEntity.ok().body(BaseResponse.ok(GetPostResponse.builder().post(post).build()));
   }
 
   @GetMapping("/user/{id}")
-  public ResponseEntity<GetUserPostResponse> getUserPosts(@PathVariable int id) {
+  public ResponseEntity<BaseResponse<GetUserPostResponse>> getUserPosts(@PathVariable int id) {
     List<PostDto> posts = postService.getUserPosts(id);
-    return ResponseEntity.ok().body(GetUserPostResponse.builder().posts(posts).build());
+    return ResponseEntity.ok().body(BaseResponse.ok(GetUserPostResponse.builder().posts(posts).build()));
   }
 }
