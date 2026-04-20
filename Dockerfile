@@ -1,6 +1,8 @@
-FROM gradle:jdk17
-# RUN apk add curl
-# RUN apk add busybox-extras
-VOLUME /data/db
-COPY build/libs/spring-app-1.0.jar app.jar
-ENTRYPOINT ["java","-jar","/home/gradle/app.jar"]
+FROM gradle:8-jdk23 AS build
+WORKDIR /app
+COPY . .
+RUN ./gradlew build -x test
+
+FROM eclipse-temurin:23-jre
+COPY --from=build /app/build/libs/*.jar app.jar
+ENTRYPOINT ["java","-jar","/app.jar"]
