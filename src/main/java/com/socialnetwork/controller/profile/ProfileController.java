@@ -26,8 +26,11 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping(path = "/profiles")
 public class ProfileController {
-  @Autowired
-  ProfileService profileService;
+  private final ProfileService profileService;
+
+  public ProfileController(ProfileService profileService) {
+    this.profileService = profileService;
+  }
 
   @PostMapping("/profile-image")
   public ResponseEntity<UpdateProfileImageResponse> updateProfileImage(
