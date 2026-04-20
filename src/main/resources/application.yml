@@ -47,6 +47,11 @@ spring:
                         scope:
                             - email
                             - profile
+    minio:
+        endpoint: http://localhost:9000
+        access-key: minioadmin
+        secret-key: minioadmin
+        bucket: spring-boot
 springdoc:
     api-docs:
         path: /api-docs
@@ -72,3 +77,33 @@ spring:
                 port: 61613
                 login: guest
                 passcode: guest
+    minio:
+        endpoint: http://minio:9000
+---
+spring:
+  config:
+    activate:
+      on-profile: h2
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+  h2:
+    console:
+      enabled: true
+  session:
+    store-type: none
+  data:
+    redis:
+      repositories:
+        enabled: false
+  rabbitmq:
+    listener:
+      type: simple
+      simple:
+        auto-startup: false

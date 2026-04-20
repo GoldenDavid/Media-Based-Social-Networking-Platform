@@ -18,11 +18,22 @@ services:
       - "6389:6379"
 
   rabbitmq:
-    image: my-rabbitmq
+    build:
+      context: ./rabbitmq-with-stomp-docker
     ports:
       - "5673:5672"
       - "15673:15672"
       - "61614:61613"
+
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
 
   spring-app-1:
     build:
@@ -32,6 +43,7 @@ services:
       - mysql
       - redis
       - rabbitmq
+      - minio
     restart: always
     ports:
       - "127.0.0.1:8090:8080"
@@ -46,6 +58,7 @@ services:
       - mysql
       - redis
       - rabbitmq
+      - minio
     restart: always
     environment:
       - SPRING_PROFILES_ACTIVE=docker-compose
