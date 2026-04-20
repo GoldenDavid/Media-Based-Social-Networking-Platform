@@ -23,8 +23,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequestMapping(path = "/comments")
 public class CommentController {
-  @Autowired
-  CommentService commentService;
+  private final CommentService commentService;
+
+  public CommentController(CommentService commentService) {
+    this.commentService = commentService;
+  }
 
   @PostMapping()
   public ResponseEntity<GetPostResponse> createComment(
