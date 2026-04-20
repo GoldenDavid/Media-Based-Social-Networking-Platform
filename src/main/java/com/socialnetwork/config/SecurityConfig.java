@@ -13,6 +13,8 @@ import com.socialnetwork.service.OAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+
 @Slf4j
 @Configuration
 @EnableWebSecurity
@@ -26,10 +28,14 @@ public class SecurityConfig {
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     log.warn("Configuring http filterChain");
     http
-        .authorizeHttpRequests(authorize -> authorize.requestMatchers("/swagger-ui/**", "/api-docs/**").permitAll())
+        .authorizeHttpRequests(authorize -> authorize
+            .requestMatchers(new AntPathRequestMatcher("/swagger-ui/**")).permitAll()
+            .requestMatchers(new AntPathRequestMatcher("/api-docs/**")).permitAll()
+            .requestMatchers(new AntPathRequestMatcher("/h2-console/**")).permitAll())
         .authorizeHttpRequests(authorize -> authorize
             .anyRequest()
             .authenticated())
+        .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable())) // Required for H2 console
         .oauth2Login(oauth2 -> oauth2
             .userInfoEndpoint(infoEndpoint -> infoEndpoint.userService(oAuth2UserService)))
         .csrf(AbstractHttpConfigurer::disable);
