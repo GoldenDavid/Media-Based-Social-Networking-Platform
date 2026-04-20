@@ -24,20 +24,20 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 public class PostServiceImpl implements PostService {
-  @Autowired
-  private ProfileService profileService;
+  private final ProfileService profileService;
+  private final UploadService uploadService;
+  private final PostRepository postRepository;
+  private final RabbitTemplate rabbitTemplate;
+  private final ObjectMapper objectMapper;
 
-  @Autowired
-  private UploadService uploadService;
-
-  @Autowired
-  private PostRepository postRepository;
-
-  @Autowired
-  RabbitTemplate rabbitTemplate;
-
-  @Autowired
-  ObjectMapper objectMapper;
+  public PostServiceImpl(ProfileService profileService, UploadService uploadService, PostRepository postRepository,
+      RabbitTemplate rabbitTemplate, ObjectMapper objectMapper) {
+    this.profileService = profileService;
+    this.uploadService = uploadService;
+    this.postRepository = postRepository;
+    this.rabbitTemplate = rabbitTemplate;
+    this.objectMapper = objectMapper;
+  }
 
   @Override
   public Post createPost(UserPrincipal userPrincipal, CreatePostRequest request) {
