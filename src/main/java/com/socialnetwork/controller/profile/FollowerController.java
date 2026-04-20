@@ -31,8 +31,11 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping(path = "/follow")
 @Validated
 public class FollowerController {
-  @Autowired
-  FollowerService followerService;
+  private final FollowerService followerService;
+
+  public FollowerController(FollowerService followerService) {
+    this.followerService = followerService;
+  }
 
   @GetMapping("/user/followers/{id}")
   public ResponseEntity<GetFollowerResponse> getFollowers(@PathVariable int id,
