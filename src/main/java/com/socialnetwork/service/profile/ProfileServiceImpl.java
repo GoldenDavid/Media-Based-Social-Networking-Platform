@@ -5,13 +5,12 @@ import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.socialnetwork.dto.UserPrincipal;
-import com.socialnetwork.dto.profile.UpdateProfileImageRequest;
-import com.socialnetwork.dto.profile.UpdateProfileRequest;
+import com.socialnetwork.dto.ProfileDto;
 import com.socialnetwork.exception.UserNotFoundException;
 import com.socialnetwork.model.Profile;
 import com.socialnetwork.repository.ProfileRepository;
 import com.socialnetwork.service.UploadService;
+import com.socialnetwork.util.MapperUtils;
 
 @Service
 public class ProfileServiceImpl implements ProfileService {
@@ -24,7 +23,11 @@ public class ProfileServiceImpl implements ProfileService {
   }
 
   @Override
-  public Profile getUserProfile(UserPrincipal userPrincipal) {
+  public ProfileDto getUserProfile(UserPrincipal userPrincipal) {
+    return MapperUtils.toDto(getProfileEntity(userPrincipal));
+  }
+
+  public Profile getProfileEntity(UserPrincipal userPrincipal) {
     Profile profile = profileRepository.findOneByUserId(userPrincipal.getId().toString());
     if (Objects.isNull(profile)) {
       profile = new Profile();
@@ -36,26 +39,26 @@ public class ProfileServiceImpl implements ProfileService {
   }
 
   @Override
-  public Profile getUserProfile(int id) {
-    return profileRepository.findById(id).orElseThrow(UserNotFoundException::new);
+  public ProfileDto getUserProfile(int id) {
+    return MapperUtils.toDto(profileRepository.findById(id).orElseThrow(UserNotFoundException::new));
   }
 
   @Override
-  public Profile updateProfile(UserPrincipal userPrincipal, UpdateProfileRequest request) {
-    Profile profile = this.getUserProfile(userPrincipal);
+  public ProfileDto updateProfile(UserPrincipal userPrincipal, UpdateProfileRequest request) {
+    Profile profile = this.getProfileEntity(userPrincipal);
     profile.setBio(request.getBio());
     profile.setDisplayName(request.getDisplayName());
     profile.setUsername(request.getUsername());
     profileRepository.save(profile);
-    return profile;
+    return MapperUtils.toDto(profile);
   }
 
   @Override
-  public Profile updateProfileImage(UserPrincipal userPrincipal, UpdateProfileImageRequest request) {
+  public ProfileDto updateProfileImage(UserPrincipal userPrincipal, UpdateProfileImageRequest request) {
     String url = uploadService.uploadImage(request.getBase64ImageString());
-    Profile profile = this.getUserProfile(userPrincipal);
+    Profile profile = this.getProfileEntity(userPrincipal);
     profile.setProfileImageUrl(url);
     profileRepository.save(profile);
-    return profile;
+    return MapperUtils.toDto(profile);
   }
 }

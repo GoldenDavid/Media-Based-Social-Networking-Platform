@@ -1,6 +1,6 @@
 package com.socialnetwork.dto.profile;
 
-import com.socialnetwork.model.Profile;
+import com.socialnetwork.dto.ProfileDto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 public class GetProfileResponse {
-  Profile profile;
+  ProfileDto profile;
   int numberOfPost;
   int numberOfFollower;
   int numberOfFollowing;

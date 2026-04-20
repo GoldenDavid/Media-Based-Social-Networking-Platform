@@ -10,13 +10,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.socialnetwork.dto.ProfileDto;
 import com.socialnetwork.dto.UserPrincipal;
 import com.socialnetwork.dto.profile.GetProfileResponse;
 import com.socialnetwork.dto.profile.UpdateProfileImageRequest;
 import com.socialnetwork.dto.profile.UpdateProfileImageResponse;
 import com.socialnetwork.dto.profile.UpdateProfileRequest;
 import com.socialnetwork.dto.profile.UpdateProfileResponse;
-import com.socialnetwork.model.Profile;
 import com.socialnetwork.service.profile.ProfileService;
 
 import jakarta.validation.Valid;
@@ -36,7 +36,7 @@ public class ProfileController {
   public ResponseEntity<UpdateProfileImageResponse> updateProfileImage(
       @Valid @RequestBody UpdateProfileImageRequest request, Authentication authentication) {
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-    Profile profile = profileService.updateProfileImage(userPrincipal, request);
+    ProfileDto profile = profileService.updateProfileImage(userPrincipal, request);
     return ResponseEntity.ok().body(UpdateProfileImageResponse.builder().url(profile.getProfileImageUrl()).build());
   }
 
@@ -44,20 +44,20 @@ public class ProfileController {
   public ResponseEntity<UpdateProfileResponse> updateProfile(
       @Valid @RequestBody UpdateProfileRequest request, Authentication authentication) {
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-    Profile profile = profileService.updateProfile(userPrincipal, request);
+    ProfileDto profile = profileService.updateProfile(userPrincipal, request);
     return ResponseEntity.ok().body(UpdateProfileResponse.builder().profile(profile).build());
   }
 
   @GetMapping("/{id}")
   public ResponseEntity<GetProfileResponse> getProfile(@PathVariable int id) {
-    Profile profile = profileService.getUserProfile(id);
+    ProfileDto profile = profileService.getUserProfile(id);
     return ResponseEntity.ok().body(GetProfileResponse.builder().profile(profile).build());
   }
 
   @GetMapping("/me")
   public ResponseEntity<GetProfileResponse> getProfile(Authentication authentication) {
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-    Profile profile = profileService.getUserProfile(userPrincipal);
+    ProfileDto profile = profileService.getUserProfile(userPrincipal);
     return ResponseEntity.ok().body(GetProfileResponse.builder().profile(profile).build());
   }
 }
