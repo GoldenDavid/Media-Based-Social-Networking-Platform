@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.socialnetwork.dto.PostDto;
 import com.socialnetwork.dto.UserPrincipal;
 import com.socialnetwork.dto.feed.CreateCommentRequest;
 import com.socialnetwork.exception.CommentNotFoundException;
@@ -17,24 +18,21 @@ import com.socialnetwork.model.Profile;
 import com.socialnetwork.repository.CommentRepository;
 import com.socialnetwork.repository.PostRepository;
 import com.socialnetwork.service.profile.ProfileService;
+import com.socialnetwork.util.MapperUtils;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class CommentServiceImpl implements CommentService {
   private final ProfileService profileService;
   private final PostRepository postRepository;
   private final CommentRepository commentRepository;
 
-  public CommentServiceImpl(ProfileService profileService, PostRepository postRepository,
-      CommentRepository commentRepository) {
-    this.profileService = profileService;
-    this.postRepository = postRepository;
-    this.commentRepository = commentRepository;
-  }
-
   @Override
   @Transactional
-  public Post createComment(UserPrincipal userPrincipal, CreateCommentRequest request) {
-    Profile profile = profileService.getUserProfile(userPrincipal);
+  public PostDto createComment(UserPrincipal userPrincipal, CreateCommentRequest request) {
+    Profile profile = profileService.getProfileEntity(userPrincipal);
     Post post = postRepository.findById(request.getPostId()).orElseThrow(PostNotFoundException::new);
     Comment comment = new Comment();
     comment.setComment(request.getComment());
@@ -42,19 +40,20 @@ public class CommentServiceImpl implements CommentService {
     comment.setCreatedBy(profile);
     comment.setPost(post);
     commentRepository.save(comment);
-    return post;
+    return MapperUtils.toDto(post);
   }
 
   @Override
   @Transactional
-  public Post deleteComment(UserPrincipal userPrincipal, int commentId) {
-    Profile profile = profileService.getUserProfile(userPrincipal);
+  public PostDto deleteComment(UserPrincipal userPrincipal, int commentId) {
+    Profile profile = profileService.getProfileEntity(userPrincipal);
     Comment comment = commentRepository.findById(commentId).orElseThrow(CommentNotFoundException::new);
     if (comment.getCreatedBy().getId() != profile.getId()) {
       throw new NoPermissionException();
     }
+    Post post = comment.getPost();
     commentRepository.delete(comment);
-    return comment.getPost();
+    return MapperUtils.toDto(post);
   }
 
 }

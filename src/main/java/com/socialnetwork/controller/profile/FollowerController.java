@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.socialnetwork.dto.BaseResponse;
 import com.socialnetwork.dto.UserPrincipal;
 import com.socialnetwork.dto.profile.FollowUserRequest;
 import com.socialnetwork.dto.profile.FollowUserResponse;
@@ -38,33 +39,33 @@ public class FollowerController {
   }
 
   @GetMapping("/user/followers/{id}")
-  public ResponseEntity<GetFollowerResponse> getFollowers(@PathVariable int id,
+  public ResponseEntity<BaseResponse<GetFollowerResponse>> getFollowers(@PathVariable int id,
       @RequestParam("page") @Min(1) Integer page,
       @RequestParam("limit") @Min(1) int limit) {
     log.info("userId={}, page={}, limit={}", id, page, limit);
-    return ResponseEntity.ok().body(followerService.getFollowers(id, page, limit));
+    return ResponseEntity.ok().body(BaseResponse.ok(followerService.getFollowers(id, page, limit)));
   }
 
   @GetMapping("/user/followings/{id}")
-  public ResponseEntity<GetFollowingResponse> getFollowing(@PathVariable int id, @RequestParam("page") @Min(1) int page,
+  public ResponseEntity<BaseResponse<GetFollowingResponse>> getFollowing(@PathVariable int id, @RequestParam("page") @Min(1) int page,
       @RequestParam("limit") @Min(1) int limit) {
     log.info("userId={}, page={}, limit={}", id, page, limit);
-    return ResponseEntity.ok().body(followerService.getFollowings(id, page, limit));
+    return ResponseEntity.ok().body(BaseResponse.ok(followerService.getFollowings(id, page, limit)));
   }
 
   @PostMapping()
-  public ResponseEntity<FollowUserResponse> folowUser(
+  public ResponseEntity<BaseResponse<FollowUserResponse>> folowUser(
       @Valid @RequestBody FollowUserRequest request, Authentication authentication) {
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
     followerService.folowUser(userPrincipal, request.getProfileId());
-    return ResponseEntity.ok().build();
+    return ResponseEntity.ok().body(BaseResponse.ok(null));
   }
 
   @DeleteMapping()
-  public ResponseEntity<UnFollowUserResponse> unfolowUser(
+  public ResponseEntity<BaseResponse<UnFollowUserResponse>> unfolowUser(
       @Valid @RequestBody UnfollowUserRequest request, Authentication authentication) {
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
     followerService.unfolowUser(userPrincipal, request.getProfileId());
-    return ResponseEntity.ok().build();
+    return ResponseEntity.ok().body(BaseResponse.ok(null));
   }
 }

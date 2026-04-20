@@ -2,7 +2,7 @@ package com.socialnetwork.dto.feed;
 
 import java.util.List;
 
-import com.socialnetwork.model.Post;
+import com.socialnetwork.dto.PostDto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,6 +14,6 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 public class GetFeedResponse {
-  private List<Post> posts;
+  private List<PostDto> posts;
   private int totalPage;
 }

@@ -47,7 +47,7 @@ public class PushFeedConsumer {
     public void receive(Integer postId) throws JsonMappingException, JsonProcessingException {
         log.info(" [x] Received '" + postId + "'");
 
-        Post post = postService.getPost(postId);
+        Post post = postService.getPostEntity(postId);
 
         List<UserFollowing> follwerList = followerRepository.findByFollowingUserId(post.getCreatedBy().getId());
 

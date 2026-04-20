@@ -5,11 +5,14 @@ import java.util.List;
 import com.socialnetwork.dto.PostDto;
 import com.socialnetwork.dto.UserPrincipal;
 import com.socialnetwork.dto.feed.CreatePostRequest;
+import com.socialnetwork.model.Post;
 
 public interface PostService {
   PostDto createPost(UserPrincipal userPrincipal, CreatePostRequest request);
 
   PostDto getPost(int postId);
+
+  Post getPostEntity(int postId);
 
   void deletePost(UserPrincipal userPrincipal, int postId);
 

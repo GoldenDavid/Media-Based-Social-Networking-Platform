@@ -2,6 +2,7 @@ package com.socialnetwork.service.feed;
 
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.socialnetwork.config.MessageQueueConfig;
 import com.socialnetwork.dto.PostDto;
+import com.socialnetwork.dto.UserPrincipal;
+import com.socialnetwork.dto.feed.CreatePostRequest;
 import com.socialnetwork.exception.NoPermissionException;
 import com.socialnetwork.exception.PostNotFoundException;
 import com.socialnetwork.model.Post;
@@ -43,7 +46,7 @@ public class PostServiceImpl implements PostService {
   @Override
   @Transactional
   public PostDto createPost(UserPrincipal userPrincipal, CreatePostRequest request) {
-    Profile profile = profileService.getUserProfile(userPrincipal);
+    Profile profile = profileService.getProfileEntity(userPrincipal);
     String url = uploadService.uploadImage(request.getBase64ImageString());
     Post post = new Post();
     post.setCaption(request.getCaption());
@@ -64,6 +67,7 @@ public class PostServiceImpl implements PostService {
     return MapperUtils.toDto(post);
   }
 
+  @Override
   public Post getPostEntity(int postId) {
     return postRepository.findById(postId).orElseThrow(PostNotFoundException::new);
   }
@@ -71,7 +75,7 @@ public class PostServiceImpl implements PostService {
   @Override
   @Transactional
   public void deletePost(UserPrincipal userPrincipal, int postId) {
-    Profile profile = profileService.getUserProfile(userPrincipal);
+    Profile profile = profileService.getProfileEntity(userPrincipal);
     Post post = getPostEntity(postId);
     if (post.getCreatedBy().getId() != profile.getId()) {
       log.warn("User {} tried to delete post {} without permission", profile.getUsername(), postId);
@@ -84,7 +88,7 @@ public class PostServiceImpl implements PostService {
   @Override
   @Transactional
   public PostDto likePost(UserPrincipal userPrincipal, int postId) {
-    Profile profile = profileService.getUserProfile(userPrincipal);
+    Profile profile = profileService.getProfileEntity(userPrincipal);
     Post post = getPostEntity(postId);
     post.getUserLikes().add(profile);
     postRepository.save(post);
@@ -96,7 +100,7 @@ public class PostServiceImpl implements PostService {
   @Override
   @Transactional
   public PostDto unlikePost(UserPrincipal userPrincipal, int postId) {
-    Profile profile = profileService.getUserProfile(userPrincipal);
+    Profile profile = profileService.getProfileEntity(userPrincipal);
     Post post = getPostEntity(postId);
     post.getUserLikes().remove(profile);
     postRepository.save(post);
@@ -105,7 +109,7 @@ public class PostServiceImpl implements PostService {
 
   @Override
   public List<PostDto> getUserPosts(int userId) {
-    Profile profile = profileService.getUserProfile(userId);
+    Profile profile = profileService.getProfileEntity(userId);
     return postRepository.findByCreatedBy(profile).stream().map(MapperUtils::toDto).collect(Collectors.toList());
   }
 

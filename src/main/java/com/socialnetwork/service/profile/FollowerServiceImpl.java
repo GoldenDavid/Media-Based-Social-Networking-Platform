@@ -9,12 +9,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.socialnetwork.dto.UserPrincipal;
+import com.socialnetwork.dto.ProfileDto;
 import com.socialnetwork.dto.profile.GetFollowerResponse;
 import com.socialnetwork.dto.profile.GetFollowingResponse;
 import com.socialnetwork.exception.InvalidInputException;
 import com.socialnetwork.model.Profile;
 import com.socialnetwork.model.UserFollowing;
 import com.socialnetwork.repository.FollowerRepository;
+import com.socialnetwork.util.MapperUtils;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -32,7 +34,7 @@ public class FollowerServiceImpl implements FollowerService {
   @Override
   @Transactional
   public void folowUser(UserPrincipal userPrincipal, int profileId) {
-    Profile profile = profileService.getUserProfile(userPrincipal);
+    Profile profile = profileService.getProfileEntity(userPrincipal);
     if (profile.getId() == profileId) {
       throw new InvalidInputException();
     }
@@ -52,7 +54,7 @@ public class FollowerServiceImpl implements FollowerService {
   @Override
   @Transactional
   public void unfolowUser(UserPrincipal userPrincipal, int profileId) {
-    Profile profile = profileService.getUserProfile(userPrincipal);
+    Profile profile = profileService.getProfileEntity(userPrincipal);
     UserFollowing existedUserFollowing = followerRepository.findByFollowerUserIdAndFollowingUserId(profile.getId(),
         profileId);
     if (Objects.isNull(existedUserFollowing)) {
@@ -68,7 +70,7 @@ public class FollowerServiceImpl implements FollowerService {
     log.info("totalFollower={}", totalFollower);
     int totalPage = (int) Math.ceil((double) totalFollower / limit);
     int offset = (page - 1) * limit;
-    List<Profile> followerProfiles = followerRepository.findByFollowingUserId(profileId, limit, offset).stream()
+    List<ProfileDto> followerProfiles = followerRepository.findByFollowingUserId(profileId, limit, offset).stream()
         .map(userFollowing -> profileService.getUserProfile(userFollowing.getFollowerUserId())).toList();
 
     return GetFollowerResponse.builder()
@@ -84,7 +86,7 @@ public class FollowerServiceImpl implements FollowerService {
     log.info("totalFollowing={}", totalFollowing);
     int totalPage = (int) Math.ceil((double) totalFollowing / limit);
     int offset = (page - 1) * limit;
-    List<Profile> followingProfiles = followerRepository.findByFollowerUserId(profileId, limit, offset).stream()
+    List<ProfileDto> followingProfiles = followerRepository.findByFollowerUserId(profileId, limit, offset).stream()
         .map(userFollowing -> profileService.getUserProfile(userFollowing.getFollowingUserId())).toList();
 
     return GetFollowingResponse.builder()

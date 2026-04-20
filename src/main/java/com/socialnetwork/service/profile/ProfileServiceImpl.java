@@ -7,6 +7,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.socialnetwork.dto.ProfileDto;
+import com.socialnetwork.dto.UserPrincipal;
+import com.socialnetwork.dto.profile.UpdateProfileImageRequest;
+import com.socialnetwork.dto.profile.UpdateProfileRequest;
 import com.socialnetwork.exception.UserNotFoundException;
 import com.socialnetwork.model.Profile;
 import com.socialnetwork.repository.ProfileRepository;
@@ -31,6 +34,7 @@ public class ProfileServiceImpl implements ProfileService {
     return MapperUtils.toDto(getProfileEntity(userPrincipal));
   }
 
+  @Override
   @Transactional
   public Profile getProfileEntity(UserPrincipal userPrincipal) {
     Profile profile = profileRepository.findOneByUserId(userPrincipal.getId().toString());
@@ -46,7 +50,12 @@ public class ProfileServiceImpl implements ProfileService {
 
   @Override
   public ProfileDto getUserProfile(int id) {
-    return MapperUtils.toDto(profileRepository.findById(id).orElseThrow(UserNotFoundException::new));
+    return MapperUtils.toDto(getProfileEntity(id));
+  }
+
+  @Override
+  public Profile getProfileEntity(int id) {
+    return profileRepository.findById(id).orElseThrow(UserNotFoundException::new);
   }
 
   @Override
