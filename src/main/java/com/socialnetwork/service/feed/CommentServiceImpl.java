@@ -19,15 +19,16 @@ import com.socialnetwork.service.profile.ProfileService;
 
 @Service
 public class CommentServiceImpl implements CommentService {
-  @Autowired
-  private ProfileService profileService;
+  private final ProfileService profileService;
+  private final PostRepository postRepository;
+  private final CommentRepository commentRepository;
 
-
-  @Autowired
-  private PostRepository postRepository;
-
-  @Autowired
-  private CommentRepository commentRepository;
+  public CommentServiceImpl(ProfileService profileService, PostRepository postRepository,
+      CommentRepository commentRepository) {
+    this.profileService = profileService;
+    this.postRepository = postRepository;
+    this.commentRepository = commentRepository;
+  }
 
   @Override
   public Post createComment(UserPrincipal userPrincipal, CreateCommentRequest request) {
