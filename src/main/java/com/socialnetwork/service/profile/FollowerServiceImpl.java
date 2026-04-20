@@ -6,6 +6,7 @@ import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.socialnetwork.dto.UserPrincipal;
 import com.socialnetwork.dto.profile.GetFollowerResponse;
@@ -29,6 +30,7 @@ public class FollowerServiceImpl implements FollowerService {
   }
 
   @Override
+  @Transactional
   public void folowUser(UserPrincipal userPrincipal, int profileId) {
     Profile profile = profileService.getUserProfile(userPrincipal);
     if (profile.getId() == profileId) {
@@ -48,6 +50,7 @@ public class FollowerServiceImpl implements FollowerService {
   }
 
   @Override
+  @Transactional
   public void unfolowUser(UserPrincipal userPrincipal, int profileId) {
     Profile profile = profileService.getUserProfile(userPrincipal);
     UserFollowing existedUserFollowing = followerRepository.findByFollowerUserIdAndFollowingUserId(profile.getId(),

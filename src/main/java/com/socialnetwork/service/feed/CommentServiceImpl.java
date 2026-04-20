@@ -4,6 +4,7 @@ import java.util.Date;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.socialnetwork.dto.UserPrincipal;
 import com.socialnetwork.dto.feed.CreateCommentRequest;
@@ -31,6 +32,7 @@ public class CommentServiceImpl implements CommentService {
   }
 
   @Override
+  @Transactional
   public Post createComment(UserPrincipal userPrincipal, CreateCommentRequest request) {
     Profile profile = profileService.getUserProfile(userPrincipal);
     Post post = postRepository.findById(request.getPostId()).orElseThrow(PostNotFoundException::new);
@@ -44,6 +46,7 @@ public class CommentServiceImpl implements CommentService {
   }
 
   @Override
+  @Transactional
   public Post deleteComment(UserPrincipal userPrincipal, int commentId) {
     Profile profile = profileService.getUserProfile(userPrincipal);
     Comment comment = commentRepository.findById(commentId).orElseThrow(CommentNotFoundException::new);

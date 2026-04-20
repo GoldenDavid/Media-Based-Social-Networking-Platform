@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.socialnetwork.dto.ProfileDto;
 import com.socialnetwork.exception.UserNotFoundException;
@@ -27,6 +28,7 @@ public class ProfileServiceImpl implements ProfileService {
     return MapperUtils.toDto(getProfileEntity(userPrincipal));
   }
 
+  @Transactional
   public Profile getProfileEntity(UserPrincipal userPrincipal) {
     Profile profile = profileRepository.findOneByUserId(userPrincipal.getId().toString());
     if (Objects.isNull(profile)) {
@@ -44,6 +46,7 @@ public class ProfileServiceImpl implements ProfileService {
   }
 
   @Override
+  @Transactional
   public ProfileDto updateProfile(UserPrincipal userPrincipal, UpdateProfileRequest request) {
     Profile profile = this.getProfileEntity(userPrincipal);
     profile.setBio(request.getBio());
@@ -54,6 +57,7 @@ public class ProfileServiceImpl implements ProfileService {
   }
 
   @Override
+  @Transactional
   public ProfileDto updateProfileImage(UserPrincipal userPrincipal, UpdateProfileImageRequest request) {
     String url = uploadService.uploadImage(request.getBase64ImageString());
     Profile profile = this.getProfileEntity(userPrincipal);

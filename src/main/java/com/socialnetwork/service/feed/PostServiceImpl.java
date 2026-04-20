@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.socialnetwork.config.MessageQueueConfig;
 import com.socialnetwork.dto.PostDto;
@@ -40,6 +41,7 @@ public class PostServiceImpl implements PostService {
   }
 
   @Override
+  @Transactional
   public PostDto createPost(UserPrincipal userPrincipal, CreatePostRequest request) {
     Profile profile = profileService.getUserProfile(userPrincipal);
     String url = uploadService.uploadImage(request.getBase64ImageString());
@@ -66,6 +68,7 @@ public class PostServiceImpl implements PostService {
   }
 
   @Override
+  @Transactional
   public void deletePost(UserPrincipal userPrincipal, int postId) {
     Profile profile = profileService.getUserProfile(userPrincipal);
     Post post = getPostEntity(postId);
@@ -76,6 +79,7 @@ public class PostServiceImpl implements PostService {
   }
 
   @Override
+  @Transactional
   public PostDto likePost(UserPrincipal userPrincipal, int postId) {
     Profile profile = profileService.getUserProfile(userPrincipal);
     Post post = getPostEntity(postId);
@@ -86,6 +90,7 @@ public class PostServiceImpl implements PostService {
   }
 
   @Override
+  @Transactional
   public PostDto unlikePost(UserPrincipal userPrincipal, int postId) {
     Profile profile = profileService.getUserProfile(userPrincipal);
     Post post = getPostEntity(postId);
