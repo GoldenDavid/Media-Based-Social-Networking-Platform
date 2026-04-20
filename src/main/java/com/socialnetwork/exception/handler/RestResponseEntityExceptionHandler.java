@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import com.socialnetwork.dto.BaseResponse;
 import com.socialnetwork.exception.CommentNotFoundException;
 import com.socialnetwork.exception.NoPermissionException;
 import com.socialnetwork.exception.PostNotFoundException;
@@ -29,15 +30,12 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
 			NoPermissionException.class, "NO_PERMISSION");
 
 	@ExceptionHandler()
-	ResponseEntity<ApiExceptionResponse> handleUserNotFoundException(RuntimeException exception) {
+	ResponseEntity<BaseResponse<Void>> handleUserNotFoundException(RuntimeException exception) {
 		HttpStatus httpStatus = EXCEPTION_TO_HTTP_STATUS_CODE.getOrDefault(exception.getClass(),
 				HttpStatus.INTERNAL_SERVER_ERROR);
 		String errorCode = EXCEPTION_TO_ERROR_CODE.getOrDefault(exception.getClass(), ERROR_CODE_INTERNAL);
 
-		final ApiExceptionResponse response = ApiExceptionResponse.builder().status(httpStatus).errorCode(errorCode)
-				.build();
-
-		return ResponseEntity.status(response.getStatus()).body(response);
+		return ResponseEntity.status(httpStatus).body(BaseResponse.error(errorCode));
 	}
 
 }
