@@ -29,8 +29,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequestMapping(path = "/posts")
 public class PostController {
-  @Autowired
-  private PostService postService;
+  private final PostService postService;
+
+  public PostController(PostService postService) {
+    this.postService = postService;
+  }
 
   @PostMapping()
   public ResponseEntity<CreatePostResponse> createPost(
