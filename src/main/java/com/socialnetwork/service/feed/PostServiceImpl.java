@@ -8,8 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.socialnetwork.config.MessageQueueConfig;
-import com.socialnetwork.dto.UserPrincipal;
-import com.socialnetwork.dto.feed.CreatePostRequest;
+import com.socialnetwork.dto.PostDto;
 import com.socialnetwork.exception.NoPermissionException;
 import com.socialnetwork.exception.PostNotFoundException;
 import com.socialnetwork.model.Post;
@@ -17,6 +16,7 @@ import com.socialnetwork.model.Profile;
 import com.socialnetwork.repository.PostRepository;
 import com.socialnetwork.service.UploadService;
 import com.socialnetwork.service.profile.ProfileService;
+import com.socialnetwork.util.MapperUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +40,7 @@ public class PostServiceImpl implements PostService {
   }
 
   @Override
-  public Post createPost(UserPrincipal userPrincipal, CreatePostRequest request) {
+  public PostDto createPost(UserPrincipal userPrincipal, CreatePostRequest request) {
     Profile profile = profileService.getUserProfile(userPrincipal);
     String url = uploadService.uploadImage(request.getBase64ImageString());
     Post post = new Post();
@@ -52,18 +52,23 @@ public class PostServiceImpl implements PostService {
 
     rabbitTemplate.convertAndSend(MessageQueueConfig.AFTER_CREATE_POST_QUEUE, post.getId());
 
-    return post;
+    return MapperUtils.toDto(post);
   }
 
   @Override
-  public Post getPost(int postId) {
+  public PostDto getPost(int postId) {
+    Post post = postRepository.findById(postId).orElseThrow(PostNotFoundException::new);
+    return MapperUtils.toDto(post);
+  }
+
+  public Post getPostEntity(int postId) {
     return postRepository.findById(postId).orElseThrow(PostNotFoundException::new);
   }
 
   @Override
   public void deletePost(UserPrincipal userPrincipal, int postId) {
     Profile profile = profileService.getUserProfile(userPrincipal);
-    Post post = postRepository.findById(postId).orElseThrow(PostNotFoundException::new);
+    Post post = getPostEntity(postId);
     if (post.getCreatedBy().getId() != profile.getId()) {
       throw new NoPermissionException();
     }
@@ -71,28 +76,28 @@ public class PostServiceImpl implements PostService {
   }
 
   @Override
-  public Post likePost(UserPrincipal userPrincipal, int postId) {
+  public PostDto likePost(UserPrincipal userPrincipal, int postId) {
     Profile profile = profileService.getUserProfile(userPrincipal);
-    Post post = getPost(postId);
+    Post post = getPostEntity(postId);
     post.getUserLikes().add(profile);
     postRepository.save(post);
 
-    return post;
+    return MapperUtils.toDto(post);
   }
 
   @Override
-  public Post unlikePost(UserPrincipal userPrincipal, int postId) {
+  public PostDto unlikePost(UserPrincipal userPrincipal, int postId) {
     Profile profile = profileService.getUserProfile(userPrincipal);
-    Post post = getPost(postId);
+    Post post = getPostEntity(postId);
     post.getUserLikes().remove(profile);
     postRepository.save(post);
-    return post;
+    return MapperUtils.toDto(post);
   }
 
   @Override
-  public List<Post> getUserPosts(int userId) {
+  public List<PostDto> getUserPosts(int userId) {
     Profile profile = profileService.getUserProfile(userId);
-    return postRepository.findByCreatedBy(profile);
+    return postRepository.findByCreatedBy(profile).stream().map(MapperUtils::toDto).collect(Collectors.toList());
   }
 
 }

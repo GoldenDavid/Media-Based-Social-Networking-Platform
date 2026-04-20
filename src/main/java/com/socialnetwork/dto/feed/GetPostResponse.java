@@ -1,6 +1,6 @@
 package com.socialnetwork.dto.feed;
 
-import com.socialnetwork.model.Post;
+import com.socialnetwork.dto.PostDto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,5 +12,5 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 public class GetPostResponse {
-  private Post post;
+  private PostDto post;
 }

@@ -13,13 +13,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.socialnetwork.dto.PostDto;
 import com.socialnetwork.dto.UserPrincipal;
 import com.socialnetwork.dto.feed.CreatePostRequest;
 import com.socialnetwork.dto.feed.CreatePostResponse;
 import com.socialnetwork.dto.feed.DeletePostResponse;
 import com.socialnetwork.dto.feed.GetPostResponse;
 import com.socialnetwork.dto.feed.GetUserPostResponse;
-import com.socialnetwork.model.Post;
 import com.socialnetwork.service.feed.PostService;
 
 import jakarta.validation.Valid;
@@ -39,13 +39,13 @@ public class PostController {
   public ResponseEntity<CreatePostResponse> createPost(
       @Valid @RequestBody CreatePostRequest request, Authentication authentication) {
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-    Post post = postService.createPost(userPrincipal, request);
+    PostDto post = postService.createPost(userPrincipal, request);
     return ResponseEntity.ok().body(CreatePostResponse.builder().post(post).build());
   }
 
   @GetMapping("/{id}")
   public ResponseEntity<GetPostResponse> getPost(@PathVariable int id) {
-    Post post = postService.getPost(id);
+    PostDto post = postService.getPost(id);
     return ResponseEntity.ok().body(GetPostResponse.builder().post(post).build());
   }
 
@@ -59,20 +59,20 @@ public class PostController {
   @PostMapping("/like/{id}")
   public ResponseEntity<GetPostResponse> likePost(@PathVariable int id, Authentication authentication) {
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-    Post post = postService.likePost(userPrincipal, id);
+    PostDto post = postService.likePost(userPrincipal, id);
     return ResponseEntity.ok().body(GetPostResponse.builder().post(post).build());
   }
 
   @DeleteMapping("/like/{id}")
   public ResponseEntity<GetPostResponse> unlikePost(@PathVariable int id, Authentication authentication) {
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-    Post post = postService.unlikePost(userPrincipal, id);
+    PostDto post = postService.unlikePost(userPrincipal, id);
     return ResponseEntity.ok().body(GetPostResponse.builder().post(post).build());
   }
 
   @GetMapping("/user/{id}")
   public ResponseEntity<GetUserPostResponse> getUserPosts(@PathVariable int id) {
-    List<Post> posts = postService.getUserPosts(id);
+    List<PostDto> posts = postService.getUserPosts(id);
     return ResponseEntity.ok().body(GetUserPostResponse.builder().posts(posts).build());
   }
 }
