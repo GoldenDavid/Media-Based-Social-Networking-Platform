@@ -13,6 +13,9 @@ import com.socialnetwork.repository.ProfileRepository;
 import com.socialnetwork.service.UploadService;
 import com.socialnetwork.util.MapperUtils;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class ProfileServiceImpl implements ProfileService {
   private final UploadService uploadService;
@@ -36,6 +39,7 @@ public class ProfileServiceImpl implements ProfileService {
       profile.setUserId(userPrincipal.getId().toString());
       profile.setDisplayName(userPrincipal.getName());
       profileRepository.save(profile);
+      log.info("Created new profile for user id: {}", userPrincipal.getId());
     }
     return profile;
   }
@@ -53,6 +57,7 @@ public class ProfileServiceImpl implements ProfileService {
     profile.setDisplayName(request.getDisplayName());
     profile.setUsername(request.getUsername());
     profileRepository.save(profile);
+    log.info("Updated profile for user: {}", profile.getUsername());
     return MapperUtils.toDto(profile);
   }
 
