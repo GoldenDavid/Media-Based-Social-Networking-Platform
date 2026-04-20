@@ -23,17 +23,15 @@ import com.socialnetwork.dto.feed.GetUserPostResponse;
 import com.socialnetwork.service.feed.PostService;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @Slf4j
+@RequiredArgsConstructor
 @RequestMapping(path = "/posts")
 public class PostController {
   private final PostService postService;
-
-  public PostController(PostService postService) {
-    this.postService = postService;
-  }
 
   @PostMapping()
   public ResponseEntity<CreatePostResponse> createPost(

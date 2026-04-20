@@ -20,17 +20,15 @@ import com.socialnetwork.dto.profile.UpdateProfileResponse;
 import com.socialnetwork.service.profile.ProfileService;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
+@RequiredArgsConstructor
 @RequestMapping(path = "/profiles")
 public class ProfileController {
   private final ProfileService profileService;
-
-  public ProfileController(ProfileService profileService) {
-    this.profileService = profileService;
-  }
 
   @PostMapping("/profile-image")
   public ResponseEntity<UpdateProfileImageResponse> updateProfileImage(
