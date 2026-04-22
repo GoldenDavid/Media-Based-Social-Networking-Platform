@@ -5,6 +5,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import lombok.Data;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -13,6 +15,8 @@ import java.util.UUID;
 
 @Data
 @Entity
+@DynamicUpdate
+@DynamicInsert
 public class User implements UserDetails {
 
     @Id
