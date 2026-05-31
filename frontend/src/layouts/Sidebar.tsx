@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Compass, Bell, PlusSquare, User, Menu } from 'lucide-react';
+import { Home, Compass, Bell, PlusSquare, User, Menu, Sun, Moon } from 'lucide-react';
+import { useTheme } from '../contexts/ThemeContext';
 import './Sidebar.css';
 
 interface SidebarProps {
@@ -8,6 +9,8 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ onOpenNotifications }: SidebarProps) => {
+  const { theme, toggleTheme } = useTheme();
+
   return (
     <aside className="sidebar glass-panel">
       <div className="sidebar-logo">
@@ -43,6 +46,10 @@ const Sidebar = ({ onOpenNotifications }: SidebarProps) => {
       </nav>
       
       <div className="sidebar-footer">
+        <button className="nav-item" onClick={toggleTheme}>
+          {theme === 'dark' ? <Sun size={24} /> : <Moon size={24} />}
+          <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+        </button>
         <button className="nav-item">
           <Menu size={24} />
           <span>More</span>
