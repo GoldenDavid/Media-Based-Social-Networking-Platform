@@ -5,10 +5,11 @@ services:
     image: mysql:latest
     restart: always
     environment:
-      MYSQL_DATABASE: app
+      MYSQL_ROOT_PASSWORD: app
       MYSQL_USER: app
       MYSQL_PASSWORD: app
-      MYSQL_ROOT_PASSWORD: app
+    volumes:
+      - ./mysql-init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "127.0.0.1:3316:3306"
 
@@ -50,6 +51,7 @@ services:
       - "127.0.0.1:8081:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker-compose
+      - MYSQL_DATABASE=user_db
 
   media-service:
     build:
@@ -87,6 +89,7 @@ services:
       - MEDIA_SERVICE_GRPC_PORT=9091
       - GRPC_PORT=9092
       - SERVER_PORT=8084
+      - MYSQL_DATABASE=profile_db
 
   post-service:
     build:
@@ -110,6 +113,7 @@ services:
       - PROFILE_SERVICE_GRPC_PORT=9092
       - GRPC_PORT=9093
       - SERVER_PORT=8085
+      - MYSQL_DATABASE=post_db
 
   notification-service:
     build:
@@ -128,6 +132,7 @@ services:
       - PROFILE_SERVICE_HOST=profile-service
       - PROFILE_SERVICE_GRPC_PORT=9092
       - SERVER_PORT=8086
+      - MYSQL_DATABASE=notification_db
 
   feed-service:
     build:

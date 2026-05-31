@@ -36,3 +36,26 @@ grpc:
     profile-service:
       address: static://${PROFILE_SERVICE_HOST:localhost}:${PROFILE_SERVICE_GRPC_PORT:9092}
       negotiation-type: plaintext
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker-compose
+  datasource:
+    url: 'jdbc:mysql://mysql/${MYSQL_DATABASE:app}'
+    username: app
+    password: app
+  data:
+    redis:
+      host: redis
+      port: 6379
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    stomp:
+      relay:
+        host: rabbitmq
+        port: 61613
+        login: guest
+        passcode: guest

@@ -73,7 +73,7 @@ spring:
     activate:
       on-profile: docker-compose
   datasource:
-    url: 'jdbc:mysql://mysql/app'
+    url: 'jdbc:mysql://mysql/${MYSQL_DATABASE:app}'
     username: app
     password: app
   data:
