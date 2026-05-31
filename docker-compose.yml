@@ -63,6 +63,43 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker-compose
   
+  media-service:
+    build:
+      context: ./media-service
+      dockerfile: Dockerfile
+    depends_on:
+      - minio
+    restart: always
+    ports:
+      - "127.0.0.1:8091:8091"  # HTTP (health/actuator)
+      - "127.0.0.1:9091:9091"  # gRPC
+    environment:
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+      - MINIO_BUCKET=spring-boot
+      - GRPC_PORT=9091
+      - SERVER_PORT=8091
+
+  profile-service:
+    build:
+      context: ./profile-service
+      dockerfile: Dockerfile
+    depends_on:
+      - mysql
+      - redis
+      - media-service
+    restart: always
+    ports:
+      - "127.0.0.1:8092:8092"  # HTTP (REST API + health)
+      - "127.0.0.1:9092:9092"  # gRPC
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker-compose
+      - MEDIA_SERVICE_HOST=media-service
+      - MEDIA_SERVICE_GRPC_PORT=9091
+      - GRPC_PORT=9092
+      - SERVER_PORT=8092
+
   nginx:
     image: nginx:1.13
     restart: always

@@ -55,6 +55,19 @@ spring:
 springdoc:
     api-docs:
         path: /api-docs
+
+# ── gRPC clients ──────────────────────────────────────────────────────────────
+# media-service: handles image uploads (base64 → MinIO)
+# profile-service: resolves profiles and follower/following graph
+grpc:
+    client:
+        media-service:
+            address: 'static://localhost:9091'
+            negotiation-type: plaintext
+        profile-service:
+            address: 'static://localhost:9092'
+            negotiation-type: plaintext
+
 ---
 spring.config.activate.on-profile: local
 ---
@@ -79,6 +92,15 @@ spring:
                 passcode: guest
     minio:
         endpoint: http://minio:9000
+grpc:
+    client:
+        media-service:
+            address: 'static://media-service:9091'
+            negotiation-type: plaintext
+        profile-service:
+            address: 'static://profile-service:9092'
+            negotiation-type: plaintext
+
 ---
 spring:
   config:
