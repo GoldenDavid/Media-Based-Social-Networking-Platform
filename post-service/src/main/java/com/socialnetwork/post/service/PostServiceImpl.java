@@ -2,26 +2,25 @@ package com.socialnetwork.post.service;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.socialnetwork.post.config.MessageQueueConfig;
+import com.socialnetwork.post.dto.CommentDto;
 import com.socialnetwork.post.dto.PostDto;
+import com.socialnetwork.post.dto.ProfileDto;
 import com.socialnetwork.post.dto.UserPrincipal;
-import com.socialnetwork.post.dto.feed.CreatePostRequest;
+import com.socialnetwork.post.dto.CreatePostRequest;
 import com.socialnetwork.post.exception.NoPermissionException;
 import com.socialnetwork.post.exception.PostNotFoundException;
 import com.socialnetwork.post.model.Post;
 import com.socialnetwork.post.model.Profile;
 import com.socialnetwork.post.repository.PostRepository;
-import com.socialnetwork.post.service.UploadService;
-import com.socialnetwork.post.service.ProfileService;
 import com.socialnetwork.post.util.MapperUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -32,15 +31,13 @@ public class PostServiceImpl implements PostService {
   private final UploadService uploadService;
   private final PostRepository postRepository;
   private final RabbitTemplate rabbitTemplate;
-  private final ObjectMapper objectMapper;
 
   public PostServiceImpl(ProfileService profileService, UploadService uploadService, PostRepository postRepository,
-      RabbitTemplate rabbitTemplate, ObjectMapper objectMapper) {
+      RabbitTemplate rabbitTemplate) {
     this.profileService = profileService;
     this.uploadService = uploadService;
     this.postRepository = postRepository;
     this.rabbitTemplate = rabbitTemplate;
-    this.objectMapper = objectMapper;
   }
 
   @Override
@@ -51,20 +48,20 @@ public class PostServiceImpl implements PostService {
     Post post = new Post();
     post.setCaption(request.getCaption());
     post.setCreatedAt(new Date());
-    post.setCreatedBy(profile);
+    post.setCreatedByProfileId(profile.getId());
     post.setImageUrl(url);
     postRepository.save(post);
     log.info("Created post with id: {} by user: {}", post.getId(), profile.getUsername());
 
     rabbitTemplate.convertAndSend(MessageQueueConfig.AFTER_CREATE_POST_QUEUE, post.getId());
 
-    return MapperUtils.toDto(post);
+    return toPostDto(post);
   }
 
   @Override
   public PostDto getPost(int postId) {
     Post post = postRepository.findById(postId).orElseThrow(PostNotFoundException::new);
-    return MapperUtils.toDto(post);
+    return toPostDto(post);
   }
 
   @Override
@@ -77,7 +74,7 @@ public class PostServiceImpl implements PostService {
   public void deletePost(UserPrincipal userPrincipal, int postId) {
     Profile profile = profileService.getProfileEntity(userPrincipal);
     Post post = getPostEntity(postId);
-    if (post.getCreatedBy().getId() != profile.getId()) {
+    if (post.getCreatedByProfileId() != profile.getId()) {
       log.warn("User {} tried to delete post {} without permission", profile.getUsername(), postId);
       throw new NoPermissionException();
     }
@@ -90,11 +87,11 @@ public class PostServiceImpl implements PostService {
   public PostDto likePost(UserPrincipal userPrincipal, int postId) {
     Profile profile = profileService.getProfileEntity(userPrincipal);
     Post post = getPostEntity(postId);
-    post.getUserLikes().add(profile);
+    post.getUserLikesProfileIds().add(profile.getId());
     postRepository.save(post);
     log.info("User {} liked post {}", profile.getUsername(), postId);
 
-    return MapperUtils.toDto(post);
+    return toPostDto(post);
   }
 
   @Override
@@ -102,15 +99,35 @@ public class PostServiceImpl implements PostService {
   public PostDto unlikePost(UserPrincipal userPrincipal, int postId) {
     Profile profile = profileService.getProfileEntity(userPrincipal);
     Post post = getPostEntity(postId);
-    post.getUserLikes().remove(profile);
+    post.getUserLikesProfileIds().remove(profile.getId());
     postRepository.save(post);
-    return MapperUtils.toDto(post);
+    return toPostDto(post);
   }
 
   @Override
   public List<PostDto> getUserPosts(int userId) {
     Profile profile = profileService.getProfileEntity(userId);
-    return postRepository.findByCreatedBy(profile).stream().map(MapperUtils::toDto).collect(Collectors.toList());
+    return postRepository.findByCreatedByProfileId(profile.getId()).stream().map(this::toPostDto).collect(Collectors.toList());
+  }
+
+  private PostDto toPostDto(Post post) {
+      ProfileDto author = profileService.getUserProfile(post.getCreatedByProfileId());
+      
+      List<CommentDto> comments = java.util.Collections.emptyList();
+      if (post.getComments() != null) {
+          comments = post.getComments().stream()
+              .map(c -> MapperUtils.toDto(c, profileService.getUserProfile(c.getCreatedByProfileId())))
+              .collect(Collectors.toList());
+      }
+      
+      Set<ProfileDto> likes = java.util.Collections.emptySet();
+      if (post.getUserLikesProfileIds() != null) {
+          likes = post.getUserLikesProfileIds().stream()
+              .map(profileService::getUserProfile)
+              .collect(Collectors.toSet());
+      }
+      
+      return MapperUtils.toDto(post, author, comments, likes);
   }
 
 }
