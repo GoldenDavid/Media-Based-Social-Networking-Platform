@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.socialnetwork.grpc.media";
+option java_outer_classname = "MediaProto";
+
+package media;
+
+// ---------------------------------------------------------------------------
+// Media Service — handles image uploads to MinIO object storage.
+// Called by Post Service and Profile Service when they need to store an image.
+// ---------------------------------------------------------------------------
+service MediaService {
+
+  // Upload a base64-encoded image and receive back its storage URL.
+  rpc UploadImage (UploadImageRequest) returns (UploadImageResponse);
+}
+
+message UploadImageRequest {
+  // Full base64 data URI, e.g. "data:image/jpeg;base64,/9j/4AAQ..."
+  string base64_image = 1;
+}
+
+message UploadImageResponse {
+  // Object name / URL returned from MinIO after a successful put.
+  string url = 1;
+  // true if upload succeeded; false with error_message on failure.
+  bool   success = 2;
+  string error_message = 3;
+}

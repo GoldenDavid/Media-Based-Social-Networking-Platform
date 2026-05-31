@@ -1,0 +1,49 @@
+plugins {
+    id 'java-library'
+    id 'com.google.protobuf' version '0.9.4'
+}
+
+group = 'com.socialnetwork'
+version = '1.0'
+
+java {
+    sourceCompatibility = '17'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    api 'io.grpc:grpc-protobuf:1.58.0'
+    api 'io.grpc:grpc-stub:1.58.0'
+    api 'io.grpc:grpc-netty-shaded:1.58.0'
+    api 'com.google.protobuf:protobuf-java:3.24.0'
+    compileOnly 'org.apache.tomcat:annotations-api:6.0.53' // @javax.annotation.Generated
+}
+
+protobuf {
+    protoc {
+        artifact = 'com.google.protobuf:protoc:3.24.0'
+    }
+    plugins {
+        grpc {
+            artifact = 'io.grpc:protoc-gen-grpc-java:1.58.0'
+        }
+    }
+    generateProtoTasks {
+        all()*.plugins {
+            grpc {}
+        }
+    }
+}
+
+// Make generated sources visible to IDEs
+sourceSets {
+    main {
+        java {
+            srcDirs 'build/generated/source/proto/main/grpc'
+            srcDirs 'build/generated/source/proto/main/java'
+        }
+    }
+}

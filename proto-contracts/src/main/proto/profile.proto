@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.socialnetwork.grpc.profile";
+option java_outer_classname = "ProfileProto";
+
+package profile;
+
+// ---------------------------------------------------------------------------
+// Profile Service — owns profile data and the follower/following social graph.
+// Called by Post Service, Feed Service, and Notification Service.
+// ---------------------------------------------------------------------------
+service ProfileService {
+
+  // Resolve a single profile by its integer profile ID.
+  rpc GetProfile (GetProfileRequest) returns (ProfileResponse);
+
+  // Resolve a profile by the OAuth2 user UUID (string).
+  // Called by Post/Comment services that only have the session UserPrincipal.
+  // Creates the profile if it does not exist yet (first-login auto-provision).
+  rpc GetOrCreateProfileByUserId (GetProfileByUserIdRequest) returns (ProfileResponse);
+
+  // Return all profile IDs that a given profile is following.
+  // Used by Feed Service (dynamic feed) to aggregate posts.
+  rpc GetFollowings (GetFollowingsRequest) returns (FollowingsResponse);
+
+  // Return all profile IDs that follow a given profile.
+  // Used by PushFeedConsumer to fan out a new post.
+  rpc GetFollowers (GetFollowersRequest) returns (FollowersResponse);
+}
+
+// ── Request / Response messages ─────────────────────────────────────────────
+
+message GetProfileRequest {
+  int32 profile_id = 1;
+}
+
+message GetProfileByUserIdRequest {
+  // UUID string from the OAuth2 session (matches User.id)
+  string user_id      = 1;
+  // Display name used when auto-creating the profile on first login
+  string display_name = 2;
+}
+
+message ProfileResponse {
+  int32  id                = 1;
+  string display_name      = 2;
+  string username          = 3;
+  string bio               = 4;
+  string profile_image_url = 5;
+  string user_id           = 6;
+}
+
+message GetFollowingsRequest {
+  int32 profile_id = 1;
+  // Optional pagination — omit for full list (fan-out case)
+  int32 limit  = 2;
+  int32 offset = 3;
+}
+
+message FollowingsResponse {
+  repeated int32 following_profile_ids = 1;
+  int32 total = 2;
+}
+
+message GetFollowersRequest {
+  int32 profile_id = 1;
+  int32 limit  = 2;
+  int32 offset = 3;
+}
+
+message FollowersResponse {
+  repeated int32 follower_profile_ids = 1;
+  int32 total = 2;
+}

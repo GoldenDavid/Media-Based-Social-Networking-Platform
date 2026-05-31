@@ -1,1 +1,12 @@
-rootProject.name = 'spring-app'
+rootProject.name = 'social-network'
+
+// Original monolith
+include 'monolith'
+project(':monolith').projectDir = file('.')
+
+// Shared proto contracts (generates Java gRPC stubs)
+include 'proto-contracts'
+
+// Microservices
+include 'media-service'
+include 'profile-service'

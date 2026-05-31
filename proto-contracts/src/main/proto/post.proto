@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.socialnetwork.grpc.post";
+option java_outer_classname = "PostProto";
+
+package post;
+
+// ---------------------------------------------------------------------------
+// Post Service — owns Post and Comment entities, like relationships.
+// Called by Feed Service when hydrating a feed from stored post IDs.
+// ---------------------------------------------------------------------------
+service PostService {
+
+  // Fetch a single post by ID.
+  rpc GetPost (GetPostRequest) returns (PostResponse);
+
+  // Batch-fetch multiple posts by a list of IDs.
+  // Feed Service calls this to hydrate pre-computed Redis feed entries.
+  rpc GetPostsByIds (GetPostsByIdsRequest) returns (PostsResponse);
+}
+
+// ── Request / Response messages ─────────────────────────────────────────────
+
+message GetPostRequest {
+  int32 post_id = 1;
+}
+
+message PostResponse {
+  int32  id                  = 1;
+  string image_url           = 2;
+  string caption             = 3;
+  int32  created_by_profile_id = 4;
+  // Epoch millis
+  int64  created_at          = 5;
+  int32  like_count          = 6;
+  int32  comment_count       = 7;
+}
+
+message GetPostsByIdsRequest {
+  repeated int32 post_ids = 1;
+}
+
+message PostsResponse {
+  repeated PostResponse posts = 1;
+}

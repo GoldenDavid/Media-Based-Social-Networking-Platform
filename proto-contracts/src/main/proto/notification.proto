@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.socialnetwork.grpc.notification";
+option java_outer_classname = "NotificationProto";
+
+package notification;
+
+// ---------------------------------------------------------------------------
+// Notification Service — persists and delivers notifications via WebSocket.
+// Receives notification events (like, comment, follow) from other services
+// through RabbitMQ (preferred for fire-and-forget delivery).
+// This gRPC service is used for querying notification history.
+// ---------------------------------------------------------------------------
+service NotificationService {
+
+  // Get paginated notifications for a given profile.
+  rpc GetNotifications (GetNotificationsRequest) returns (GetNotificationsResponse);
+
+  // Mark a notification as read.
+  rpc MarkAsRead (MarkAsReadRequest) returns (MarkAsReadResponse);
+}
+
+// ── Enum ────────────────────────────────────────────────────────────────────
+
+enum NotificationType {
+  UNKNOWN  = 0;
+  LIKE     = 1;
+  COMMENT  = 2;
+  FOLLOW   = 3;
+}
+
+// ── Request / Response messages ─────────────────────────────────────────────
+
+message GetNotificationsRequest {
+  int32 profile_id = 1;
+  int32 page       = 2;
+  int32 limit      = 3;
+}
+
+message NotificationItem {
+  int32            id                = 1;
+  int32            from_profile_id   = 2;
+  int32            to_profile_id     = 3;
+  int32            post_id           = 4;
+  NotificationType notification_type = 5;
+  int64            created_at        = 6; // epoch millis
+}
+
+message GetNotificationsResponse {
+  repeated NotificationItem notifications = 1;
+  int32 total_page = 2;
+}
+
+message MarkAsReadRequest {
+  int32 notification_id = 1;
+  int32 profile_id      = 2; // for ownership check
+}
+
+message MarkAsReadResponse {
+  bool success = 1;
+}

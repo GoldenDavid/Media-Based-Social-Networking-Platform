@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.socialnetwork.grpc.user";
+option java_outer_classname = "UserProto";
+
+package user;
+
+// ---------------------------------------------------------------------------
+// User Service — owns authentication identity (OAuth2 user records).
+// Other services resolve a User ID to basic identity info through this service.
+// ---------------------------------------------------------------------------
+service UserService {
+
+  // Resolve a user by their UUID string.
+  rpc GetUser (GetUserRequest) returns (UserResponse);
+
+  // Validate that a session/token belongs to an active user.
+  rpc ValidateUser (ValidateUserRequest) returns (ValidateUserResponse);
+}
+
+// ── Request / Response messages ─────────────────────────────────────────────
+
+message GetUserRequest {
+  // UUID as string (matches the User entity's UUID PK)
+  string user_id = 1;
+}
+
+message UserResponse {
+  string  id         = 1;
+  string  username   = 2;
+  string  name       = 3;
+  string  picture    = 4;
+  string  provider   = 5;
+  string  provider_id = 6;
+  bool    enabled    = 7;
+}
+
+message ValidateUserRequest {
+  string user_id = 1;
+}
+
+message ValidateUserResponse {
+  bool   valid   = 1;
+  string user_id = 2;
+}
