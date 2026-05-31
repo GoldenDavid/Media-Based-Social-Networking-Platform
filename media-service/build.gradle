@@ -1,0 +1,55 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.1.5'
+    id 'io.spring.dependency-management' version '1.1.3'
+    id 'com.google.protobuf' version '0.9.4'
+}
+
+group = 'com.socialnetwork'
+version = '1.0'
+
+java {
+    sourceCompatibility = '17'
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // gRPC stubs from shared proto-contracts module
+    implementation project(':proto-contracts')
+
+    // Spring Boot
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // gRPC server
+    implementation 'net.devh:grpc-server-spring-boot-starter:2.15.0.RELEASE'
+
+    // MinIO — S3-compatible object storage
+    implementation 'io.minio:minio:8.5.7'
+
+    // Reactor Netty (needed by MinIO async client)
+    implementation 'io.projectreactor.netty:reactor-netty'
+
+    // Utilities
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+    // Testing
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'io.grpc:grpc-testing:1.58.0'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

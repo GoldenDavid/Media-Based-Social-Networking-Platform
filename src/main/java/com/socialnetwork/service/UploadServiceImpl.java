@@ -12,9 +12,17 @@ import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import lombok.extern.slf4j.Slf4j;
 
-@Service
+/**
+ * @deprecated Replaced by {@link MediaServiceGrpcClient} which delegates
+ *             to the standalone media-service via gRPC.
+ *             This class is kept temporarily during the migration phase.
+ *             Remove once all environments run the media-service container.
+ */
+@Deprecated(since = "1.1", forRemoval = true)
+@Service("uploadServiceLegacy")
 @Slf4j
 public class UploadServiceImpl implements UploadService {
+
   @Autowired
   MinioClient minioClient;
 
