@@ -3,7 +3,11 @@ import { NavLink } from 'react-router-dom';
 import { Home, Compass, Bell, PlusSquare, User, Menu } from 'lucide-react';
 import './Sidebar.css';
 
-const Sidebar = () => {
+interface SidebarProps {
+  onOpenNotifications: () => void;
+}
+
+const Sidebar = ({ onOpenNotifications }: SidebarProps) => {
   return (
     <aside className="sidebar glass-panel">
       <div className="sidebar-logo">
@@ -21,12 +25,11 @@ const Sidebar = () => {
           <span>Explore</span>
         </NavLink>
         
-        <NavLink to="/notifications" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+        <button className="nav-item" onClick={onOpenNotifications}>
           <Bell size={24} />
           <span>Notifications</span>
-          {/* Notification Badge Example */}
-          <span className="badge">3</span>
-        </NavLink>
+          <span className="badge">New</span>
+        </button>
         
         <NavLink to="/create" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
           <PlusSquare size={24} />
