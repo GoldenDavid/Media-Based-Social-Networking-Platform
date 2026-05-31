@@ -1,4 +1,4 @@
-version: '3'
+version: '3.8'
 
 services:
   mysql:
@@ -35,6 +35,7 @@ services:
       MINIO_ROOT_PASSWORD: minioadmin
     command: server /data --console-address ":9001"
 
+  # Legacy Monolith (Acts as User/Auth Service)
   spring-app-1:
     build:
       context: .
@@ -46,23 +47,10 @@ services:
       - minio
     restart: always
     ports:
-      - "127.0.0.1:8090:8080"
+      - "127.0.0.1:8081:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker-compose
-  
-  spring-app-2:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    depends_on:
-      - mysql
-      - redis
-      - rabbitmq
-      - minio
-    restart: always
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker-compose
-  
+
   media-service:
     build:
       context: ./media-service
@@ -71,15 +59,15 @@ services:
       - minio
     restart: always
     ports:
-      - "127.0.0.1:8091:8091"  # HTTP (health/actuator)
-      - "127.0.0.1:9091:9091"  # gRPC
+      - "127.0.0.1:8083:8083"
+      - "127.0.0.1:9091:9091"
     environment:
       - MINIO_ENDPOINT=http://minio:9000
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minioadmin
       - MINIO_BUCKET=spring-boot
       - GRPC_PORT=9091
-      - SERVER_PORT=8091
+      - SERVER_PORT=8083
 
   profile-service:
     build:
@@ -91,22 +79,95 @@ services:
       - media-service
     restart: always
     ports:
-      - "127.0.0.1:8092:8092"  # HTTP (REST API + health)
-      - "127.0.0.1:9092:9092"  # gRPC
+      - "127.0.0.1:8084:8084"
+      - "127.0.0.1:9092:9092"
     environment:
       - SPRING_PROFILES_ACTIVE=docker-compose
       - MEDIA_SERVICE_HOST=media-service
       - MEDIA_SERVICE_GRPC_PORT=9091
       - GRPC_PORT=9092
-      - SERVER_PORT=8092
+      - SERVER_PORT=8084
 
-  nginx:
-    image: nginx:1.13
+  post-service:
+    build:
+      context: ./post-service
+      dockerfile: Dockerfile
+    depends_on:
+      - mysql
+      - redis
+      - profile-service
+      - media-service
+      - rabbitmq
     restart: always
     ports:
-    - 8080:8080
-    volumes:
-    - ./nginx/conf:/etc/nginx/conf.d
+      - "127.0.0.1:8085:8085"
+      - "127.0.0.1:9093:9093"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker-compose
+      - MEDIA_SERVICE_HOST=media-service
+      - MEDIA_SERVICE_GRPC_PORT=9091
+      - PROFILE_SERVICE_HOST=profile-service
+      - PROFILE_SERVICE_GRPC_PORT=9092
+      - GRPC_PORT=9093
+      - SERVER_PORT=8085
+
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
     depends_on:
-    - spring-app-1
-    - spring-app-2
+      - mysql
+      - redis
+      - profile-service
+      - rabbitmq
+    restart: always
+    ports:
+      - "127.0.0.1:8086:8086"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker-compose
+      - PROFILE_SERVICE_HOST=profile-service
+      - PROFILE_SERVICE_GRPC_PORT=9092
+      - SERVER_PORT=8086
+
+  feed-service:
+    build:
+      context: ./feed-service
+      dockerfile: Dockerfile
+    depends_on:
+      - redis
+      - profile-service
+      - post-service
+      - rabbitmq
+    restart: always
+    ports:
+      - "127.0.0.1:8087:8087"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker-compose
+      - PROFILE_SERVICE_HOST=profile-service
+      - PROFILE_SERVICE_GRPC_PORT=9092
+      - POST_SERVICE_HOST=post-service
+      - POST_SERVICE_GRPC_PORT=9093
+      - SERVER_PORT=8087
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    depends_on:
+      - spring-app-1
+      - media-service
+      - profile-service
+      - post-service
+      - feed-service
+      - notification-service
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker-compose
+      - USER_SERVICE_HOST=spring-app-1
+      - MEDIA_SERVICE_HOST=media-service
+      - PROFILE_SERVICE_HOST=profile-service
+      - POST_SERVICE_HOST=post-service
+      - FEED_SERVICE_HOST=feed-service
+      - NOTIFICATION_SERVICE_HOST=notification-service
