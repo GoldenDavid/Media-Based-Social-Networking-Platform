@@ -18,6 +18,12 @@ service PostService {
   // Batch-fetch multiple posts by a list of IDs.
   // Feed Service calls this to hydrate pre-computed Redis feed entries.
   rpc GetPostsByIds (GetPostsByIdsRequest) returns (PostsResponse);
+
+  // Count total posts authored by a list of profile IDs.
+  rpc CountPostsByAuthors (CountPostsByAuthorsRequest) returns (CountPostsResponse);
+
+  // Paginated fetch of posts authored by a list of profile IDs.
+  rpc GetPostsByAuthors (GetPostsByAuthorsRequest) returns (PostsResponse);
 }
 
 // ── Request / Response messages ─────────────────────────────────────────────
@@ -43,4 +49,18 @@ message GetPostsByIdsRequest {
 
 message PostsResponse {
   repeated PostResponse posts = 1;
+}
+
+message CountPostsByAuthorsRequest {
+  repeated int32 author_profile_ids = 1;
+}
+
+message CountPostsResponse {
+  int32 count = 1;
+}
+
+message GetPostsByAuthorsRequest {
+  repeated int32 author_profile_ids = 1;
+  int32 limit  = 2;
+  int32 offset = 3;
 }
