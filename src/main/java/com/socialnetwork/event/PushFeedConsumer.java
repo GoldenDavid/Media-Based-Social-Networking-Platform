@@ -8,52 +8,48 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.socialnetwork.config.MessageQueueConfig;
 import com.socialnetwork.model.Post;
-import com.socialnetwork.model.UserFollowing;
 import com.socialnetwork.repository.FeedRepository;
-import com.socialnetwork.repository.FollowerRepository;
-import com.socialnetwork.repository.NotificationRepository;
 import com.socialnetwork.service.feed.PostService;
-import com.socialnetwork.service.profile.FollowerService;
-import com.socialnetwork.service.profile.ProfileService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.socialnetwork.service.profile.ProfileServiceGrpcClient;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * RabbitMQ consumer for the {@code after-create-post-queue}.
+ *
+ * <p>Fans out a newly created post to each follower's Redis feed list.
+ *
+ * <p><b>Before (monolith)</b>: called {@code FollowerRepository.findByFollowingUserId()} directly.
+ * <p><b>After (microservices)</b>: calls {@link ProfileServiceGrpcClient#getFollowerIds}
+ * via gRPC — the monolith no longer reads {@code user_following} directly.
+ */
 @Slf4j
 @RabbitListener(queues = MessageQueueConfig.AFTER_CREATE_POST_QUEUE)
 public class PushFeedConsumer {
 
     @Autowired
-    ObjectMapper objectMapper;
-
-    @Autowired
-    ProfileService profileService;
-
-    @Autowired
     PostService postService;
-
-    @Autowired
-    FollowerRepository followerRepository;
-
-    @Autowired
-    NotificationRepository notificationRepository;
 
     @Autowired
     FeedRepository feedRepository;
 
+    @Autowired
+    ProfileServiceGrpcClient profileServiceGrpcClient;
+
     @RabbitHandler
-    public void receive(Integer postId) throws JsonMappingException, JsonProcessingException {
-        log.info(" [x] Received '" + postId + "'");
+    public void receive(Integer postId) {
+        log.info("[x] Received postId={}", postId);
 
         Post post = postService.getPostEntity(postId);
+        int authorProfileId = post.getCreatedBy().getId();
 
-        List<UserFollowing> follwerList = followerRepository.findByFollowingUserId(post.getCreatedBy().getId());
+        // ── gRPC call replaces: followerRepository.findByFollowingUserId(authorProfileId) ──
+        List<Integer> followerIds = profileServiceGrpcClient.getFollowerIds(authorProfileId);
+        log.info("Fanning out postId={} to {} followers", postId, followerIds.size());
 
-        for (UserFollowing userFollowing : follwerList) {
-            log.info("userFollowing={}", userFollowing);
-            feedRepository.addPostToFeed(post.getId(), userFollowing.getFollowerUserId());
+        for (int followerProfileId : followerIds) {
+            feedRepository.addPostToFeed(post.getId(), followerProfileId);
         }
     }
 }
+
