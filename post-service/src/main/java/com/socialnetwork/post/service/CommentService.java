@@ -1,8 +1,8 @@
-package com.socialnetwork.service.feed;
+package com.socialnetwork.post.service;
 
 import com.socialnetwork.post.dto.PostDto;
 import com.socialnetwork.post.dto.UserPrincipal;
-import com.socialnetwork.post.dto.feed.CreateCommentRequest;
+import com.socialnetwork.post.dto.CreateCommentRequest;
 
 public interface CommentService {
   PostDto createComment(UserPrincipal userPrincipal, CreateCommentRequest request);

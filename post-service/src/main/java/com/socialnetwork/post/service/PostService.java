@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.socialnetwork.post.dto.PostDto;
 import com.socialnetwork.post.dto.UserPrincipal;
-import com.socialnetwork.post.dto.feed.CreatePostRequest;
+import com.socialnetwork.post.dto.CreatePostRequest;
 import com.socialnetwork.post.model.Post;
 
 public interface PostService {
