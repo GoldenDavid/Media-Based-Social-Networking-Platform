@@ -21,8 +21,15 @@ import com.socialnetwork.util.MapperUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Service
+/**
+ * @deprecated Replaced by the standalone profile-service which natively hosts
+ *             the follower/following social graph.
+ *             This class is kept temporarily during the migration phase.
+ */
+@Deprecated(since = "1.2", forRemoval = true)
+@Service("followerServiceLegacy")
 public class FollowerServiceImpl implements FollowerService {
+
   private final ProfileService profileService;
   private final FollowerRepository followerRepository;
 

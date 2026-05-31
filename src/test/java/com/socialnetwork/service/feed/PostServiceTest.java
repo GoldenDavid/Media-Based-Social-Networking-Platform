@@ -66,7 +66,7 @@ class PostServiceTest {
         assertEquals("Test Caption", result.getCaption());
         assertEquals("http://image.url", result.getImageUrl());
         verify(postRepository).save(any(Post.class));
-        verify(rabbitTemplate).convertAndSend(anyString(), any());
+        verify(rabbitTemplate).convertAndSend(anyString(), any(Integer.class));
     }
 
     @Test

@@ -28,7 +28,8 @@ class PostRepositoryTest {
         // Arrange
         Profile profile = new Profile();
         profile.setUsername("testuser");
-        profile.setEmail("test@example.com");
+        profile.setUserId("user-123");
+        profile.setDisplayName("Test User");
         profile = entityManager.persist(profile);
 
         Post post1 = new Post();

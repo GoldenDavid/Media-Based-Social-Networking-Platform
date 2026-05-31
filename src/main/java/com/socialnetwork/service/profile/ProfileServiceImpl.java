@@ -18,8 +18,14 @@ import com.socialnetwork.util.MapperUtils;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * @deprecated Replaced by {@link ProfileServiceGrpcClient} which delegates
+ *             to the standalone profile-service via gRPC.
+ *             This class is kept temporarily during the migration phase.
+ */
+@Deprecated(since = "1.2", forRemoval = true)
+@Service("profileServiceLegacy")
 @Slf4j
-@Service
 public class ProfileServiceImpl implements ProfileService {
   private final UploadService uploadService;
   private final ProfileRepository profileRepository;
