@@ -1,0 +1,61 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+      routes:
+        # Media Service
+        - id: media-service
+          uri: http://${MEDIA_SERVICE_HOST:localhost}:8083
+          predicates:
+            - Path=/media/**
+            
+        # Profile Service
+        - id: profile-service
+          uri: http://${PROFILE_SERVICE_HOST:localhost}:8084
+          predicates:
+            - Path=/profiles/**, /followers/**
+
+        # Post Service
+        - id: post-service
+          uri: http://${POST_SERVICE_HOST:localhost}:8085
+          predicates:
+            - Path=/posts/**, /comments/**
+
+        # Feed Service
+        - id: feed-service
+          uri: http://${FEED_SERVICE_HOST:localhost}:8087
+          predicates:
+            - Path=/dynamic-feeds/**, /precomputed-feeds/**
+
+        # Notification Service
+        - id: notification-service
+          uri: http://${NOTIFICATION_SERVICE_HOST:localhost}:8086
+          predicates:
+            - Path=/gs-guide-websocket/**, /notifications/**
+
+        # Monolith / Auth (Fallback for auth logic if any left in user service)
+        - id: user-service
+          uri: http://${USER_SERVICE_HOST:localhost}:8081
+          predicates:
+            - Path=/oauth2/**, /login/**, /users/**
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: gateway
