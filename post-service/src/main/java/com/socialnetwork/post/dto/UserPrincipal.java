@@ -4,31 +4,33 @@ import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.oauth2.core.user.OAuth2User;
-
-import com.socialnetwork.post.model.User;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Represents the authenticated principal in the post-service.
+ * This is deserialized from the shared Redis session written by the monolith/user-service.
+ * OAuth2User is NOT implemented here — only UserDetails for session-based auth.
+ */
 @Data
-public class UserPrincipal implements OAuth2User, UserDetails {
+public class UserPrincipal implements UserDetails {
 
     private UUID id;
     private String username;
     private String password;
     private String name;
-    private boolean accountNonExpired;
-    private boolean accountNonLocked;
-    private boolean credentialsNonExpired;
+    private boolean accountNonExpired = true;
+    private boolean accountNonLocked = true;
+    private boolean credentialsNonExpired = true;
     private String provider;
     private String providerId;
-    private boolean enabled;
+    private boolean enabled = true;
     private Collection<? extends GrantedAuthority> authorities;
-    private Map<String, Object> attributes;
+
+    public UserPrincipal() {}
 
     public UserPrincipal(UUID id, String username, String password,
             Collection<? extends GrantedAuthority> authorities) {
@@ -38,20 +40,9 @@ public class UserPrincipal implements OAuth2User, UserDetails {
         this.authorities = authorities;
     }
 
-    public static UserPrincipal create(User user) {
-        List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
-
-        return new UserPrincipal(
-                user.getId(),
-                user.getUsername(),
-                user.getPassword(),
-                authorities);
+    public static UserPrincipal create(UUID id, String username) {
+        List<GrantedAuthority> authorities = Collections.singletonList(
+                new SimpleGrantedAuthority("ROLE_USER"));
+        return new UserPrincipal(id, username, null, authorities);
     }
-
-    public static UserPrincipal create(User user, Map<String, Object> attributes) {
-        UserPrincipal userPrincipal = UserPrincipal.create(user);
-        userPrincipal.setAttributes(attributes);
-        return userPrincipal;
-    }
-
 }

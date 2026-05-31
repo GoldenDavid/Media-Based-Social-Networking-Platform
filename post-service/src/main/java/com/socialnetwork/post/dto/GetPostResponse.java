@@ -1,6 +1,7 @@
 package com.socialnetwork.post.dto;
 
-import org.hibernate.validator.constraints.Length;
+import com.socialnetwork.post.dto.PostDto;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,9 +11,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 @AllArgsConstructor
-public class CreatePostRequest {
-  @Length(min = 1)
-  private String base64ImageString;
-  @Length(min = 1, max = 2000)
-  private String caption;
+public class GetPostResponse {
+  private PostDto post;
 }

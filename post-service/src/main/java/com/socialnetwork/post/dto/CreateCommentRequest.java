@@ -1,4 +1,4 @@
-package com.socialnetwork.dto.feed;
+package com.socialnetwork.post.dto;
 
 import org.hibernate.validator.constraints.Length;
 
