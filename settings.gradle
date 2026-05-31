@@ -9,4 +9,5 @@ include 'proto-contracts'
 include 'media-service'
 include 'profile-service'
 include 'post-service'
+include 'feed-service'
 
