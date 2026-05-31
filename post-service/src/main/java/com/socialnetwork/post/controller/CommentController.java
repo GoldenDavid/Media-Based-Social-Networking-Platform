@@ -1,4 +1,4 @@
-package com.socialnetwork.controller.feed;
+package com.socialnetwork.post.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.socialnetwork.post.dto.BaseResponse;
 import com.socialnetwork.post.dto.PostDto;
 import com.socialnetwork.post.dto.UserPrincipal;
-import com.socialnetwork.post.dto.feed.CreateCommentRequest;
-import com.socialnetwork.post.dto.feed.GetPostResponse;
-import com.socialnetwork.post.service.feed.CommentService;
+import com.socialnetwork.post.dto.CreateCommentRequest;
+import com.socialnetwork.post.dto.GetPostResponse;
+import com.socialnetwork.post.service.CommentService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

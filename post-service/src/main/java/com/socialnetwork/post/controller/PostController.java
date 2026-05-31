@@ -1,4 +1,4 @@
-package com.socialnetwork.controller.feed;
+package com.socialnetwork.post.controller;
 
 import java.util.List;
 
@@ -16,12 +16,12 @@ import org.springframework.web.bind.annotation.RestController;
 import com.socialnetwork.post.dto.BaseResponse;
 import com.socialnetwork.post.dto.PostDto;
 import com.socialnetwork.post.dto.UserPrincipal;
-import com.socialnetwork.post.dto.feed.CreatePostRequest;
-import com.socialnetwork.post.dto.feed.CreatePostResponse;
-import com.socialnetwork.post.dto.feed.DeletePostResponse;
-import com.socialnetwork.post.dto.feed.GetPostResponse;
-import com.socialnetwork.post.dto.feed.GetUserPostResponse;
-import com.socialnetwork.post.service.feed.PostService;
+import com.socialnetwork.post.dto.CreatePostRequest;
+import com.socialnetwork.post.dto.CreatePostResponse;
+import com.socialnetwork.post.dto.DeletePostResponse;
+import com.socialnetwork.post.dto.GetPostResponse;
+import com.socialnetwork.post.dto.GetUserPostResponse;
+import com.socialnetwork.post.service.PostService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

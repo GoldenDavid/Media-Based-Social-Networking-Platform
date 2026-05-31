@@ -110,9 +110,9 @@ public class PostGrpcService extends PostServiceGrpc.PostServiceImplBase {
                 .setId(post.getId())
                 .setImageUrl(post.getImageUrl() != null ? post.getImageUrl() : "")
                 .setCaption(post.getCaption() != null ? post.getCaption() : "")
-                .setCreatedByProfileId(post.getCreatedBy() != null ? post.getCreatedBy().getId() : 0)
+                .setCreatedByProfileId(post.getCreatedByProfileId())
                 .setCreatedAt(post.getCreatedAt() != null ? post.getCreatedAt().getTime() : 0)
-                .setLikeCount(post.getUserLikes() != null ? post.getUserLikes().size() : 0)
+                .setLikeCount(post.getUserLikesProfileIds() != null ? post.getUserLikesProfileIds().size() : 0)
                 .setCommentCount(post.getComments() != null ? post.getComments().size() : 0)
                 .build();
     }
