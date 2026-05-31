@@ -1,8 +1,6 @@
 rootProject.name = 'social-network'
 
-// Original monolith
-include 'monolith'
-project(':monolith').projectDir = file('.')
+// Original monolith (runs as the root project)
 
 // Shared proto contracts (generates Java gRPC stubs)
 include 'proto-contracts'
@@ -10,3 +8,5 @@ include 'proto-contracts'
 // Microservices
 include 'media-service'
 include 'profile-service'
+include 'post-service'
+
