@@ -60,4 +60,20 @@ public class MediaServiceGrpcClient implements UploadService {
             return null;
         }
     }
+
+    /**
+     * Converts a MultipartFile to a base64 string and delegates to {@link #uploadImage(String)}.
+     */
+    @Override
+    public String uploadImage(org.springframework.web.multipart.MultipartFile file) {
+        try {
+            byte[] bytes = file.getBytes();
+            String base64 = java.util.Base64.getEncoder().encodeToString(bytes);
+            String mimeType = file.getContentType() != null ? file.getContentType() : "image/jpeg";
+            return uploadImage("data:" + mimeType + ";base64," + base64);
+        } catch (java.io.IOException e) {
+            log.error("Failed to read MultipartFile for upload", e);
+            return null;
+        }
+    }
 }
