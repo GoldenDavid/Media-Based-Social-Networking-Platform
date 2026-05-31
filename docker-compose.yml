@@ -176,3 +176,13 @@ services:
       - POST_SERVICE_HOST=post-service
       - FEED_SERVICE_HOST=feed-service
       - NOTIFICATION_SERVICE_HOST=notification-service
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    depends_on:
+      - api-gateway
+    restart: always
+    ports:
+      - "3000:80"

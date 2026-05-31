@@ -1,0 +1,29 @@
+.app-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 250px; /* Width of sidebar */
+  padding: 40px;
+  max-width: 1000px;
+  margin-right: auto;
+}
+
+.page-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: calc(100vh - 80px);
+  color: var(--text-secondary);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+    margin-bottom: 70px; /* Height of mobile bottom nav */
+    padding: 16px;
+  }
+}
