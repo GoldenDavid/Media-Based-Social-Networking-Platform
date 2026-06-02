@@ -8,7 +8,6 @@ import com.socialnetwork.post.service.UploadService;
 import io.grpc.StatusRuntimeException;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.client.inject.GrpcClient;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 /**

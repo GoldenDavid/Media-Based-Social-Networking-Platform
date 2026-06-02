@@ -30,7 +30,11 @@ public class SecurityConfig {
             .requestMatchers(new AntPathRequestMatcher("/swagger-ui/**")).permitAll()
             .requestMatchers(new AntPathRequestMatcher("/api-docs/**")).permitAll()
             .requestMatchers(new AntPathRequestMatcher("/actuator/**")).permitAll()
-            .anyRequest().authenticated()
+            .requestMatchers(new AntPathRequestMatcher("/posts", "POST")).authenticated()
+            .requestMatchers(new AntPathRequestMatcher("/posts/*", "DELETE")).authenticated()
+            .requestMatchers(new AntPathRequestMatcher("/posts/like/**")).authenticated()
+            .requestMatchers(new AntPathRequestMatcher("/comments/**")).authenticated()
+            .anyRequest().permitAll()
         )
         .csrf(AbstractHttpConfigurer::disable);
     return http.build();

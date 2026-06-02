@@ -16,6 +16,9 @@ repositories {
 }
 
 dependencies {
+    // Shared Java library (UserPrincipal, BaseResponse, SessionConfig)
+    implementation project(':socialnetwork-common')
+
     implementation 'org.springframework.cloud:spring-cloud-starter-gateway:4.0.7'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
 }

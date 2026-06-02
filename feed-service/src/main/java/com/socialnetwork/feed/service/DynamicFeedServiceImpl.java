@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 
 import com.socialnetwork.feed.dto.GetFeedResponse;
 import com.socialnetwork.feed.dto.PostDto;
-import com.socialnetwork.feed.dto.UserPrincipal;
+import com.socialnetwork.common.security.UserPrincipal;
 import com.socialnetwork.feed.grpc.PostServiceGrpcClient;
 import com.socialnetwork.feed.grpc.ProfileServiceGrpcClient;
 
@@ -35,17 +35,12 @@ public class DynamicFeedServiceImpl implements FeedService {
 
         int offset = (page - 1) * limit;
 
-        // 2. Get posts by authors via gRPC
         List<PostDto> posts = postService.getPostsByAuthors(followingProfileIds, limit, offset);
 
-        // For a full implementation, we'd also call a count gRPC endpoint to get total pages,
-        // but for simplicity (or if we add count later), let's just return what we have.
-        // Assuming infinite scrolling where totalPage doesn't block UI if we just return empty lists.
-        // Or we could implement countPostsByAuthors in post-service if needed.
-        // Actually we do have countPostsByAuthors in the proto! Let's mock it for now or assume 1 page.
-        // I will add a count method to PostServiceGrpcClient if needed later.
+        int totalPosts = postService.countPostsByAuthors(followingProfileIds);
+        int totalPage = totalPosts == 0 ? 0 : (int) Math.ceil((double) totalPosts / limit);
 
         return GetFeedResponse.builder()
-                .posts(posts).totalPage(1).build(); // Hardcoded totalPage for now since UI usually relies on empty list to stop
+                .posts(posts).totalPage(totalPage).build();
     }
 }

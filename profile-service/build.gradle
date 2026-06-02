@@ -21,6 +21,9 @@ repositories {
 }
 
 dependencies {
+    // Shared Java library (UserPrincipal, BaseResponse, SessionConfig)
+    implementation project(':socialnetwork-common')
+
     // Shared gRPC stubs
     implementation project(':proto-contracts')
 

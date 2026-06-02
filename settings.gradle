@@ -2,6 +2,9 @@ rootProject.name = 'social-network'
 
 // Original monolith (runs as the root project)
 
+// Shared Java library (DTOs, config, security — see socialnetwork-common/README.md)
+include 'socialnetwork-common'
+
 // Shared proto contracts (generates Java gRPC stubs)
 include 'proto-contracts'
 

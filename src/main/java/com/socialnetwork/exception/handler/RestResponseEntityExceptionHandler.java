@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import com.socialnetwork.dto.BaseResponse;
+import com.socialnetwork.common.dto.BaseResponse;
 import com.socialnetwork.exception.CommentNotFoundException;
 import com.socialnetwork.exception.NoPermissionException;
 import com.socialnetwork.exception.PostNotFoundException;

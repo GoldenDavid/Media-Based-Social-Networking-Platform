@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.socialnetwork.feed.dto.GetFeedResponse;
-import com.socialnetwork.feed.dto.UserPrincipal;
+import com.socialnetwork.common.security.UserPrincipal;
 import com.socialnetwork.feed.service.FeedService;
 
 import lombok.extern.slf4j.Slf4j;

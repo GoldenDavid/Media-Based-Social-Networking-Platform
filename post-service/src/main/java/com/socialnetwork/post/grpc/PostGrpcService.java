@@ -1,9 +1,12 @@
 package com.socialnetwork.post.grpc;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.springframework.stereotype.Service;
+import net.devh.boot.grpc.server.service.GrpcService;
 
 import com.socialnetwork.grpc.post.CountPostsByAuthorsRequest;
 import com.socialnetwork.grpc.post.CountPostsResponse;
@@ -22,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Service
+@GrpcService
 @RequiredArgsConstructor
 public class PostGrpcService extends PostServiceGrpc.PostServiceImplBase {
 
@@ -52,9 +55,12 @@ public class PostGrpcService extends PostServiceGrpc.PostServiceImplBase {
         log.info("gRPC GetPostsByIds: size={}", request.getPostIdsCount());
         try {
             List<Post> posts = postRepository.findAllById(request.getPostIdsList());
-            
-            // Map and preserve order if possible, though PostRepository might not guarantee order.
-            List<PostResponse> postResponses = posts.stream()
+            Map<Integer, Post> postsById = posts.stream()
+                    .collect(Collectors.toMap(Post::getId, Function.identity(), (a, b) -> a));
+
+            List<PostResponse> postResponses = request.getPostIdsList().stream()
+                    .map(postsById::get)
+                    .filter(Objects::nonNull)
                     .map(this::toPostResponse)
                     .collect(Collectors.toList());
 

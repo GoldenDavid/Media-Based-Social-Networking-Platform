@@ -39,3 +39,8 @@ log/
 
 ### Docs ###
 architecture.md
+plan.md
+
+### Environment ###
+.env
+docker-compose.override.yml

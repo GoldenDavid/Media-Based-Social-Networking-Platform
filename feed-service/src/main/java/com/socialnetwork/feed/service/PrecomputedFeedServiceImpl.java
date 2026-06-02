@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 
 import com.socialnetwork.feed.dto.GetFeedResponse;
 import com.socialnetwork.feed.dto.PostDto;
-import com.socialnetwork.feed.dto.UserPrincipal;
+import com.socialnetwork.common.security.UserPrincipal;
 import com.socialnetwork.feed.grpc.PostServiceGrpcClient;
 import com.socialnetwork.feed.grpc.ProfileServiceGrpcClient;
 import com.socialnetwork.feed.repository.FeedRepository;

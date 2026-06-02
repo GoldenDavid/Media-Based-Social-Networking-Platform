@@ -1,4 +1,4 @@
-package com.socialnetwork.post.post;
+package com.socialnetwork.post;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

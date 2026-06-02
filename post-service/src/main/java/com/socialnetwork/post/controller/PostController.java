@@ -2,7 +2,6 @@ package com.socialnetwork.post.controller;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -13,14 +12,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.socialnetwork.post.dto.BaseResponse;
-import com.socialnetwork.post.dto.PostDto;
-import com.socialnetwork.post.dto.UserPrincipal;
+import com.socialnetwork.common.dto.BaseResponse;
+import com.socialnetwork.common.security.UserPrincipal;
 import com.socialnetwork.post.dto.CreatePostRequest;
 import com.socialnetwork.post.dto.CreatePostResponse;
 import com.socialnetwork.post.dto.DeletePostResponse;
 import com.socialnetwork.post.dto.GetPostResponse;
 import com.socialnetwork.post.dto.GetUserPostResponse;
+import com.socialnetwork.post.dto.PostDto;
 import com.socialnetwork.post.service.PostService;
 
 import jakarta.validation.Valid;

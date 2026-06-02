@@ -1,6 +1,9 @@
 package com.socialnetwork.profile.controller;
 
-import com.socialnetwork.profile.dto.*;
+import com.socialnetwork.common.security.UserPrincipal;
+import com.socialnetwork.profile.dto.FollowUserRequest;
+import com.socialnetwork.profile.dto.ProfileDto;
+import com.socialnetwork.profile.dto.UnfollowUserRequest;
 import com.socialnetwork.profile.service.FollowerService;
 
 import jakarta.validation.Valid;

@@ -3,7 +3,7 @@ spring:
     name: profile-service
 
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost/spring_session}
+    url: ${DB_URL:jdbc:mysql://localhost/profile_db}
     username: ${DB_USER:root}
     password: ${DB_PASSWORD:root@123}
     tomcat:
@@ -22,35 +22,19 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       database: 1
+      password: ${REDIS_PASSWORD:}
 
-  security:
-    oauth2:
-      client:
-        registration:
-          google:
-            client-id: ${GOOGLE_CLIENT_ID:CHANGE_YOUR_GOOGLE_CLIENT_ID}
-            client-secret: ${GOOGLE_CLIENT_SECRET:CHANGE_YOUR_GOOGLE_SECRET_CLIENT_ID}
-            scope:
-              - email
-              - profile
-
-  minio:
-    endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
-    access-key: ${MINIO_ACCESS_KEY:minioadmin}
-    secret-key: ${MINIO_SECRET_KEY:minioadmin}
-
-# gRPC server — serves profile queries to Post Service, Feed Service, etc.
 grpc:
   server:
     port: ${GRPC_PORT:9092}
-  # gRPC client — calls Media Service for profile image uploads
   client:
     media-service:
       address: 'static://${MEDIA_SERVICE_HOST:localhost}:${MEDIA_SERVICE_GRPC_PORT:9091}'
       negotiation-type: plaintext
+      default-deadline-ms: 5000
 
 server:
-  port: ${SERVER_PORT:8092}
+  port: ${SERVER_PORT:8084}
 
 springdoc:
   api-docs:
@@ -73,13 +57,14 @@ spring:
     activate:
       on-profile: docker-compose
   datasource:
-    url: 'jdbc:mysql://mysql/${MYSQL_DATABASE:app}'
+    url: 'jdbc:mysql://mysql/${MYSQL_DATABASE:profile_db}'
     username: app
     password: app
   data:
     redis:
       host: redis
       port: 6379
+      password: ${REDIS_PASSWORD:devpassword}
 grpc:
   client:
     media-service:

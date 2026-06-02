@@ -15,7 +15,7 @@ import com.socialnetwork.post.dto.CommentDto;
 import com.socialnetwork.post.dto.CreatePostRequest;
 import com.socialnetwork.post.dto.PostDto;
 import com.socialnetwork.post.dto.ProfileDto;
-import com.socialnetwork.post.dto.UserPrincipal;
+import com.socialnetwork.common.security.UserPrincipal;
 import com.socialnetwork.post.exception.NoPermissionException;
 import com.socialnetwork.post.exception.PostNotFoundException;
 import com.socialnetwork.post.model.Post;
@@ -40,6 +40,9 @@ public class PostServiceImpl implements PostService {
   public PostDto createPost(UserPrincipal userPrincipal, CreatePostRequest request) {
     ProfileDto profile = profileService.getProfile(userPrincipal);
     String url = uploadService.uploadImage(request.getBase64ImageString());
+    if (url == null || url.isBlank()) {
+      throw new com.socialnetwork.post.exception.InvalidInputException("Image upload failed");
+    }
 
     Post post = new Post();
     post.setCaption(request.getCaption());
@@ -120,7 +123,7 @@ public class PostServiceImpl implements PostService {
     Set<ProfileDto> likes = Collections.emptySet();
     if (post.getUserLikesProfileIds() != null) {
       likes = post.getUserLikesProfileIds().stream()
-          .map(profileService::getUserProfile)
+          .map(id -> profileService.getUserProfile(id))
           .collect(Collectors.toSet());
     }
 

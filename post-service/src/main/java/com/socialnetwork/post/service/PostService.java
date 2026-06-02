@@ -3,7 +3,7 @@ package com.socialnetwork.post.service;
 import java.util.List;
 
 import com.socialnetwork.post.dto.PostDto;
-import com.socialnetwork.post.dto.UserPrincipal;
+import com.socialnetwork.common.security.UserPrincipal;
 import com.socialnetwork.post.dto.CreatePostRequest;
 import com.socialnetwork.post.model.Post;
 

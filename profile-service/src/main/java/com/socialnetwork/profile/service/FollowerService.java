@@ -1,7 +1,7 @@
 package com.socialnetwork.profile.service;
 
 import com.socialnetwork.profile.dto.ProfileDto;
-import com.socialnetwork.profile.dto.UserPrincipal;
+import com.socialnetwork.common.security.UserPrincipal;
 import com.socialnetwork.profile.model.Profile;
 import com.socialnetwork.profile.model.UserFollowing;
 import com.socialnetwork.profile.repository.FollowerRepository;

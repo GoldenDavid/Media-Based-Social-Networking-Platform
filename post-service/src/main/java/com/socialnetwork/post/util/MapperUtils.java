@@ -1,10 +1,8 @@
 package com.socialnetwork.post.util;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import com.socialnetwork.post.dto.CommentDto;
 import com.socialnetwork.post.dto.PostDto;

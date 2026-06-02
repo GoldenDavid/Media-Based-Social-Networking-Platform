@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.socialnetwork.post.dto.PostDto;
 import com.socialnetwork.post.dto.CreateCommentRequest;
 import com.socialnetwork.post.dto.ProfileDto;
-import com.socialnetwork.post.dto.UserPrincipal;
+import com.socialnetwork.common.security.UserPrincipal;
 import com.socialnetwork.post.exception.CommentNotFoundException;
 import com.socialnetwork.post.exception.NoPermissionException;
 import com.socialnetwork.post.exception.PostNotFoundException;

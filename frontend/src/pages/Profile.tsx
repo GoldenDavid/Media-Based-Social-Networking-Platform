@@ -1,38 +1,72 @@
-import { Settings, Grid, Bookmark } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Settings, Grid, Bookmark, X } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { api, type ProfileDto, type PostDto } from '../services/api';
+import PostCard from '../components/PostCard';
 import './Profile.css';
 
-const MOCK_PROFILE = {
-  username: 'neon_dreamer',
-  name: 'Neon Dreamer',
-  bio: 'Digital artist & cyberpunk enthusiast. Creating worlds out of pixels. 🎮✨',
-  avatarUrl: 'https://i.pravatar.cc/150?img=32',
-  posts: 42,
-  followers: '12.4K',
-  following: 890
-};
-
-const MOCK_GRID = [
-  'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=500&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=500&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1605806616949-1e87b487cb2a?q=80&w=500&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=500&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=500&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=500&auto=format&fit=crop',
-];
-
 const Profile = () => {
+  const { user, loading: authLoading } = useAuth();
+  const [profile, setProfile] = useState<ProfileDto | null>(null);
+  const [posts, setPosts] = useState<PostDto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedPost, setSelectedPost] = useState<PostDto | null>(null);
+
+
+
+  const handlePostUpdated = useCallback((updated: PostDto) => {
+    setSelectedPost(updated);
+    setPosts(prev => prev.map(p => p.id === updated.id ? updated : p));
+  }, []);
+
+  useEffect(() => {
+    if (authLoading || !user) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    const fetchProfileData = async () => {
+      try {
+        const profileRes = await api.getMyProfile();
+        if (cancelled) return;
+        setProfile(profileRes.profile);
+        
+        if (profileRes.profile?.id) {
+          const postsRes = await api.getUserPosts(profileRes.profile.id);
+          if (!cancelled) setPosts(postsRes.posts || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch profile data:", error);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    fetchProfileData();
+    return () => { cancelled = true; };
+  }, [authLoading, user]);
+
+  if (loading) {
+    return <div className="loading-spinner">Loading...</div>;
+  }
+
+
+
+  if (!profile) {
+    return <div className="empty-state">Failed to load profile.</div>;
+  }
+
   return (
     <div className="profile-container animate-fade-in">
       <header className="profile-header glass-panel">
         <div className="profile-avatar-container">
           <div className="avatar-ring-large">
-            <img src={MOCK_PROFILE.avatarUrl} alt="Avatar" className="profile-avatar" />
+            <img src={profile.profileImageUrl || 'https://i.pravatar.cc/150'} alt="Avatar" className="profile-avatar" />
           </div>
         </div>
         
         <div className="profile-info">
           <div className="profile-actions">
-            <h2 className="profile-username">{MOCK_PROFILE.username}</h2>
+            <h2 className="profile-username">{profile.username}</h2>
             <button className="btn-primary">Edit Profile</button>
             <button className="btn-icon">
               <Settings size={24} />
@@ -40,14 +74,14 @@ const Profile = () => {
           </div>
           
           <div className="profile-stats">
-            <span><strong className="text-primary">{MOCK_PROFILE.posts}</strong> posts</span>
-            <span><strong className="text-primary">{MOCK_PROFILE.followers}</strong> followers</span>
-            <span><strong className="text-primary">{MOCK_PROFILE.following}</strong> following</span>
+            <span><strong className="text-primary">{posts.length}</strong> posts</span>
+            <span><strong className="text-primary">-</strong> followers</span>
+            <span><strong className="text-primary">-</strong> following</span>
           </div>
           
           <div className="profile-bio">
-            <h3 className="font-bold">{MOCK_PROFILE.name}</h3>
-            <p>{MOCK_PROFILE.bio}</p>
+            <h3 className="font-bold">{profile.displayName}</h3>
+            <p>{profile.bio}</p>
           </div>
         </div>
       </header>
@@ -62,16 +96,35 @@ const Profile = () => {
       </div>
       
       <div className="profile-grid">
-        {MOCK_GRID.map((url, i) => (
-          <div key={i} className="grid-item">
-            <img src={url} alt={`Post ${i}`} />
-            <div className="grid-item-overlay">
-              <span>❤️ 1.2k</span>
-              <span>💬 45</span>
+        {posts.length === 0 ? (
+          <div className="empty-state">No posts yet.</div>
+        ) : (
+          posts.map((post) => (
+            <div key={post.id} className="grid-item" onClick={() => setSelectedPost(post)} style={{ cursor: 'pointer' }}>
+              <img src={post.imageUrl} alt={`Post ${post.id}`} />
+              <div className="grid-item-overlay">
+                <span>❤️ {post.userLikes?.length || 0}</span>
+                <span>💬 {post.comments?.length || 0}</span>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
+
+      {selectedPost && (
+        <div className="zoom-modal-overlay" onClick={() => setSelectedPost(null)}>
+          <button className="zoom-close-btn" onClick={() => setSelectedPost(null)}>
+            <X size={32} />
+          </button>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: '500px' }}>
+            <PostCard 
+              post={selectedPost} 
+              currentUser={user} 
+              onPostUpdated={handlePostUpdated} 
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

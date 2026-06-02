@@ -14,7 +14,7 @@ import com.socialnetwork.grpc.profile.GetProfileRequest;
 import com.socialnetwork.grpc.profile.ProfileResponse;
 import com.socialnetwork.grpc.profile.ProfileServiceGrpc;
 import com.socialnetwork.post.dto.ProfileDto;
-import com.socialnetwork.post.dto.UserPrincipal;
+import com.socialnetwork.common.security.UserPrincipal;
 import com.socialnetwork.post.service.ProfileService;
 
 import io.grpc.StatusRuntimeException;

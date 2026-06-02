@@ -1,4 +1,3 @@
-import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Home, Compass, Bell, PlusSquare, User, Menu, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';

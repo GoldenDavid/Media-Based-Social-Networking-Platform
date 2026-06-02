@@ -9,12 +9,25 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
-      },
-      '/ws': {
-        target: 'ws://localhost:8080',
         ws: true,
-      }
-    }
-  }
+        rewrite: (path) => path.replace(/^\/api/, ''),
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.setHeader('X-Forwarded-Host', 'localhost:3000')
+            proxyReq.setHeader('X-Forwarded-Proto', 'http')
+          })
+          proxy.on('proxyRes', (proxyRes) => {
+            const cookies = proxyRes.headers['set-cookie']
+            if (cookies) {
+              proxyRes.headers['set-cookie'] = cookies.map((cookie) =>
+                cookie
+                  .replace(/;\s*Secure/gi, '')
+                  .replace(/Domain=[^;]+/gi, '')
+              )
+            }
+          })
+        },
+      },
+    },
+  },
 })

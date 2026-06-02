@@ -1,7 +1,7 @@
 package com.socialnetwork.post.service;
 
 import com.socialnetwork.post.dto.ProfileDto;
-import com.socialnetwork.post.dto.UserPrincipal;
+import com.socialnetwork.common.security.UserPrincipal;
 
 /**
  * Post-service's view of the Profile Service.

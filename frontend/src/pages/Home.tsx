@@ -1,29 +1,39 @@
+import { useCallback, useEffect, useState } from 'react';
 import PostCard from '../components/PostCard';
+import { useAuth } from '../contexts/AuthContext';
+import { api, type PostDto } from '../services/api';
 import './Home.css';
 
-// Mock data to demonstrate the UI until API integration
-const MOCK_POSTS = [
-  {
-    id: 1,
-    username: 'alex_cyber',
-    avatarUrl: 'https://i.pravatar.cc/150?u=alex',
-    imageUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=1000&auto=format&fit=crop',
-    caption: 'Exploring the neon streets tonight. The vibes are immaculate! 🌃✨ #cyberpunk #citylights',
-    likes: 1243,
-    timeAgo: '2 hours ago'
-  },
-  {
-    id: 2,
-    username: 'nova_designs',
-    avatarUrl: 'https://i.pravatar.cc/150?u=nova',
-    imageUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000&auto=format&fit=crop',
-    caption: 'Abstract fluid gradients are my new obsession. What do you guys think? 🎨',
-    likes: 892,
-    timeAgo: '5 hours ago'
-  }
-];
-
 const Home = () => {
+  const { user, loading: authLoading } = useAuth();
+  const [posts, setPosts] = useState<PostDto[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const handlePostUpdated = useCallback((updated: PostDto) => {
+    setPosts(prev => prev.map(p => p.id === updated.id ? updated : p));
+  }, []);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    const fetchFeed = async () => {
+      try {
+        const response = await api.getFeed(1, 10);
+        if (!cancelled) setPosts(response.posts || []);
+      } catch (error) {
+        console.error("Failed to fetch feed:", error);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    fetchFeed();
+    return () => { cancelled = true; };
+  }, [authLoading, user]);
+
   return (
     <div className="home-container">
       <header className="home-header">
@@ -31,17 +41,20 @@ const Home = () => {
       </header>
       
       <div className="feed-container">
-        {MOCK_POSTS.map(post => (
-          <PostCard 
-            key={post.id}
-            username={post.username}
-            avatarUrl={post.avatarUrl}
-            imageUrl={post.imageUrl}
-            caption={post.caption}
-            likes={post.likes}
-            timeAgo={post.timeAgo}
-          />
-        ))}
+        {loading ? (
+          <div className="loading-spinner">Loading...</div>
+        ) : posts.length === 0 ? (
+          <div className="empty-state animate-fade-in">No posts in your feed yet!</div>
+        ) : (
+          posts.map(post => (
+            <PostCard 
+              key={post.id}
+              post={post}
+              currentUser={user}
+              onPostUpdated={handlePostUpdated}
+            />
+          ))
+        )}
       </div>
     </div>
   );

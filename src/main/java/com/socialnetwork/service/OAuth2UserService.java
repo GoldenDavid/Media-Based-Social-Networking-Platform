@@ -9,10 +9,12 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 import com.socialnetwork.dto.Oauth2UserInfoDto;
-import com.socialnetwork.dto.UserPrincipal;
+import com.socialnetwork.common.security.UserPrincipal;
 import com.socialnetwork.model.User;
 import com.socialnetwork.repository.UserRepository;
+import com.socialnetwork.security.UserPrincipalConverter;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -32,19 +34,20 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
     }
 
     private OAuth2User processOAuth2User(OAuth2UserRequest oAuth2UserRequest, OAuth2User oAuth2User) {
+        Map<String, Object> attrs = oAuth2User.getAttributes();
         Oauth2UserInfoDto userInfoDto = Oauth2UserInfoDto
                 .builder()
-                .name(oAuth2User.getAttributes().get("name").toString())
-                .id(oAuth2User.getAttributes().get("sub").toString())
-                .email(oAuth2User.getAttributes().get("email").toString())
-                .picture(oAuth2User.getAttributes().get("picture").toString())
+                .name(attrs.get("name") != null ? attrs.get("name").toString() : "")
+                .id(attrs.get("sub") != null ? attrs.get("sub").toString() : "")
+                .email(attrs.get("email") != null ? attrs.get("email").toString() : "")
+                .picture(attrs.get("picture") != null ? attrs.get("picture").toString() : "")
                 .build();
 
         Optional<User> userOptional = userRepository.findByUsername(userInfoDto.getEmail());
         User user = userOptional
                 .map(existingUser -> updateExistingUser(existingUser, userInfoDto))
                 .orElseGet(() -> registerNewUser(oAuth2UserRequest, userInfoDto));
-        return UserPrincipal.create(user, oAuth2User.getAttributes());
+        return UserPrincipalConverter.fromUser(user, oAuth2User.getAttributes());
     }
 
     private User registerNewUser(OAuth2UserRequest oAuth2UserRequest, Oauth2UserInfoDto userInfoDto) {

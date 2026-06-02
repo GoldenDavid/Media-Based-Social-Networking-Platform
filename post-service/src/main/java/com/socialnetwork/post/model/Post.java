@@ -1,26 +1,23 @@
 package com.socialnetwork.post.model;
 
-import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
 import jakarta.persistence.CollectionTable;
-import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Column;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -48,6 +45,10 @@ public class Post {
   @OneToMany(mappedBy = "post")
   @JsonProperty("comments")
   private List<Comment> comments;
+
+  @Version
+  @Column(name = "version")
+  private Integer version;
 
   @ElementCollection
   @CollectionTable(name = "post_likes", joinColumns = @JoinColumn(name = "post_id"))

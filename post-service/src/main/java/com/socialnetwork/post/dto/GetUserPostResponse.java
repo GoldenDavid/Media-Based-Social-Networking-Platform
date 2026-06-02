@@ -2,7 +2,6 @@ package com.socialnetwork.post.dto;
 
 import java.util.List;
 
-import com.socialnetwork.post.dto.PostDto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

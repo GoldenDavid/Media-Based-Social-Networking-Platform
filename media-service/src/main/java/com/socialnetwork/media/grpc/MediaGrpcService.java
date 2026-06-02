@@ -51,11 +51,14 @@ public class MediaGrpcService extends MediaServiceGrpc.MediaServiceImplBase {
             InputStream imageStream = decodeBase64(base64);
             String fileName = UUID.randomUUID() + "." + extension;
 
+            String contentType = "image/" + (extension.equals("jpg") ? "jpeg" : extension);
+
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(bucket)
                             .object(fileName)
                             .stream(imageStream, -1, 5_242_880) // 5 MB part size
+                            .contentType(contentType)
                             .build()
             );
 

@@ -19,6 +19,7 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:devpassword}
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
@@ -36,6 +37,7 @@ grpc:
     profile-service:
       address: static://${PROFILE_SERVICE_HOST:localhost}:${PROFILE_SERVICE_GRPC_PORT:9092}
       negotiation-type: plaintext
+      default-deadline-ms: 5000
 
 ---
 spring:
@@ -43,13 +45,14 @@ spring:
     activate:
       on-profile: docker-compose
   datasource:
-    url: 'jdbc:mysql://mysql/${MYSQL_DATABASE:app}'
+    url: 'jdbc:mysql://mysql/${MYSQL_DATABASE:notification_db}'
     username: app
     password: app
   data:
     redis:
       host: redis
       port: 6379
+      password: ${REDIS_PASSWORD:devpassword}
   rabbitmq:
     host: rabbitmq
     port: 5672
@@ -59,3 +62,8 @@ spring:
         port: 61613
         login: guest
         passcode: guest
+grpc:
+  client:
+    profile-service:
+      address: static://profile-service:9092
+      negotiation-type: plaintext

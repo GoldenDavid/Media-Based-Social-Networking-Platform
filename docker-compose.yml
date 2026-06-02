@@ -1,64 +1,111 @@
-version: '3.8'
-
 services:
   mysql:
-    image: mysql:latest
+    image: mysql:8.0
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: app
-      MYSQL_USER: app
-      MYSQL_PASSWORD: app
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-app}
+      MYSQL_USER: ${MYSQL_USER:-app}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-app}
     volumes:
       - ./mysql-init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-      - "127.0.0.1:3316:3306"
+      - "127.0.0.1:3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - backend-net
 
   redis:
-    image: redis
+    image: redis:7-alpine
+    command: redis-server --requirepass ${REDIS_PASSWORD:-devpassword}
     ports:
-      - "6389:6379"
+      - "127.0.0.1:6379:6379"
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-devpassword}
+    healthcheck:
+      test: ["CMD", "sh", "-c", "redis-cli -a \"$REDIS_PASSWORD\" --no-auth-warning ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    networks:
+      - backend-net
 
   rabbitmq:
     build:
       context: ./rabbitmq-with-stomp-docker
     ports:
-      - "5673:5672"
-      - "15673:15672"
-      - "61614:61613"
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"
+      - "127.0.0.1:61613:61613"
+    environment:
+      RABBITMQ_CONFIG_EXTRA: "loopback_users.guest = false"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - backend-net
 
   minio:
-    image: minio/minio
+    image: minio/minio:RELEASE.2024-11-07T00-52-20Z
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
     command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - backend-net
 
   # Legacy Monolith (Acts as User/Auth Service)
   spring-app-1:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        MODULE_NAME: social-network
     depends_on:
-      - mysql
-      - redis
-      - rabbitmq
-      - minio
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     restart: always
     ports:
       - "127.0.0.1:8081:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker-compose
       - MYSQL_DATABASE=user_db
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-devpassword}
+    networks:
+      - backend-net
 
   media-service:
     build:
       context: ./media-service
       dockerfile: Dockerfile
+      args:
+        MODULE_NAME: media-service
     depends_on:
-      - minio
+      minio:
+        condition: service_healthy
     restart: always
     ports:
       - "127.0.0.1:8083:8083"
@@ -70,15 +117,22 @@ services:
       - MINIO_BUCKET=spring-boot
       - GRPC_PORT=9091
       - SERVER_PORT=8083
+    networks:
+      - backend-net
 
   profile-service:
     build:
       context: ./profile-service
       dockerfile: Dockerfile
+      args:
+        MODULE_NAME: profile-service
     depends_on:
-      - mysql
-      - redis
-      - media-service
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      media-service:
+        condition: service_started
     restart: always
     ports:
       - "127.0.0.1:8084:8084"
@@ -90,17 +144,27 @@ services:
       - GRPC_PORT=9092
       - SERVER_PORT=8084
       - MYSQL_DATABASE=profile_db
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-devpassword}
+    networks:
+      - backend-net
 
   post-service:
     build:
       context: ./post-service
       dockerfile: Dockerfile
+      args:
+        MODULE_NAME: post-service
     depends_on:
-      - mysql
-      - redis
-      - profile-service
-      - media-service
-      - rabbitmq
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      profile-service:
+        condition: service_started
+      media-service:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
     restart: always
     ports:
       - "127.0.0.1:8085:8085"
@@ -114,16 +178,25 @@ services:
       - GRPC_PORT=9093
       - SERVER_PORT=8085
       - MYSQL_DATABASE=post_db
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-devpassword}
+    networks:
+      - backend-net
 
   notification-service:
     build:
       context: ./notification-service
       dockerfile: Dockerfile
+      args:
+        MODULE_NAME: notification-service
     depends_on:
-      - mysql
-      - redis
-      - profile-service
-      - rabbitmq
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      profile-service:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
     restart: always
     ports:
       - "127.0.0.1:8086:8086"
@@ -133,16 +206,25 @@ services:
       - PROFILE_SERVICE_GRPC_PORT=9092
       - SERVER_PORT=8086
       - MYSQL_DATABASE=notification_db
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-devpassword}
+    networks:
+      - backend-net
 
   feed-service:
     build:
       context: ./feed-service
       dockerfile: Dockerfile
+      args:
+        MODULE_NAME: feed-service
     depends_on:
-      - redis
-      - profile-service
-      - post-service
-      - rabbitmq
+      redis:
+        condition: service_healthy
+      profile-service:
+        condition: service_started
+      post-service:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
     restart: always
     ports:
       - "127.0.0.1:8087:8087"
@@ -153,36 +235,67 @@ services:
       - POST_SERVICE_HOST=post-service
       - POST_SERVICE_GRPC_PORT=9093
       - SERVER_PORT=8087
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-devpassword}
+    networks:
+      - backend-net
 
   api-gateway:
     build:
       context: ./api-gateway
       dockerfile: Dockerfile
+      args:
+        MODULE_NAME: api-gateway
     depends_on:
-      - spring-app-1
-      - media-service
-      - profile-service
-      - post-service
-      - feed-service
-      - notification-service
+      spring-app-1:
+        condition: service_started
+      media-service:
+        condition: service_started
+      profile-service:
+        condition: service_started
+      post-service:
+        condition: service_started
+      feed-service:
+        condition: service_started
+      notification-service:
+        condition: service_started
     restart: always
     ports:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker-compose
       - USER_SERVICE_HOST=spring-app-1
+      - USER_SERVICE_PORT=8080
       - MEDIA_SERVICE_HOST=media-service
       - PROFILE_SERVICE_HOST=profile-service
       - POST_SERVICE_HOST=post-service
       - FEED_SERVICE_HOST=feed-service
       - NOTIFICATION_SERVICE_HOST=notification-service
+    networks:
+      - frontend-net
+      - backend-net
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     depends_on:
-      - api-gateway
+      api-gateway:
+        condition: service_started
     restart: always
     ports:
       - "3000:80"
+    networks:
+      - frontend-net
+
+networks:
+  frontend-net:
+    driver: bridge
+  backend-net:
+    driver: bridge
+
+x-resources: &default-resources
+  deploy:
+    resources:
+      limits:
+        memory: 512M
+        cpus: '0.5'

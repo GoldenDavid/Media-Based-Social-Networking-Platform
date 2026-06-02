@@ -1,66 +1,164 @@
-import { Heart, MessageCircle, Share2, MoreHorizontal, Bookmark } from 'lucide-react';
+import { memo, useState } from 'react';
+import { Heart, MessageCircle, Share2, MoreHorizontal, Bookmark, X, Send } from 'lucide-react';
+import { api, type PostDto, type UserPrincipal } from '../services/api';
 import './PostCard.css';
 
 interface PostCardProps {
-  username: string;
-  avatarUrl: string;
-  imageUrl: string;
-  caption: string;
-  likes: number;
-  timeAgo: string;
+  post: PostDto;
+  currentUser: UserPrincipal | null;
+  onPostUpdated?: (updatedPost: PostDto) => void;
 }
 
-const PostCard = ({ username, avatarUrl, imageUrl, caption, likes, timeAgo }: PostCardProps) => {
+const PostCard = memo(({ post: initialPost, currentUser, onPostUpdated }: PostCardProps) => {
+  const [post, setPost] = useState<PostDto>(initialPost);
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [isLiking, setIsLiking] = useState(false);
+  const [isCommenting, setIsCommenting] = useState(false);
+
+  const hasLiked = currentUser ? post.userLikes?.some(u => u.username === currentUser.username) : false;
+
+  const handleLikeToggle = async () => {
+    if (!currentUser || isLiking) return;
+    setIsLiking(true);
+    try {
+      const updatedPost = hasLiked 
+        ? await api.unlikePost(post.id)
+        : await api.likePost(post.id);
+      setPost(updatedPost);
+      if (onPostUpdated) onPostUpdated(updatedPost);
+    } catch (error) {
+      console.error('Failed to toggle like', error);
+    } finally {
+      setIsLiking(false);
+    }
+  };
+
+  const submitComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!commentText.trim() || !currentUser || isCommenting) return;
+    
+    setIsCommenting(true);
+    try {
+      const updatedPost = await api.commentOnPost(post.id, commentText.trim());
+      setPost(updatedPost);
+      setCommentText('');
+      if (onPostUpdated) onPostUpdated(updatedPost);
+    } catch (error) {
+      console.error('Failed to post comment', error);
+    } finally {
+      setIsCommenting(false);
+    }
+  };
+
+  const username = post.createdBy?.username || 'Unknown';
+  const avatarUrl = post.createdBy?.profileImageUrl || 'https://i.pravatar.cc/150';
+  const timeAgo = new Date(post.createdAt).toLocaleDateString();
+
   return (
-    <article className="post-card glass-panel animate-fade-in">
-      <div className="post-header">
-        <div className="post-user-info">
-          <div className="avatar-ring">
-            <img src={avatarUrl} alt={username} className="avatar-img" />
+    <>
+      <article className="post-card glass-panel animate-fade-in">
+        <div className="post-header">
+          <div className="post-user-info">
+            <div className="avatar-ring">
+              <img src={avatarUrl} alt={username} className="avatar-img" />
+            </div>
+            <div className="user-meta">
+              <span className="username">{username}</span>
+              <span className="time-ago">{timeAgo}</span>
+            </div>
           </div>
-          <div className="user-meta">
-            <span className="username">{username}</span>
-            <span className="time-ago">{timeAgo}</span>
+          <button className="btn-icon">
+            <MoreHorizontal size={20} />
+          </button>
+        </div>
+        
+        <div className="post-image-container" onClick={() => setIsZoomed(true)}>
+          <img src={post.imageUrl} alt="Post content" className="post-image" />
+        </div>
+        
+        <div className="post-actions">
+          <div className="action-group">
+            <button 
+              className={`btn-icon action-btn like-btn ${hasLiked ? 'liked' : ''}`}
+              onClick={handleLikeToggle}
+              disabled={!currentUser || isLiking}
+            >
+              <Heart size={24} fill={hasLiked ? 'currentColor' : 'none'} />
+            </button>
+            <button className="btn-icon action-btn" onClick={() => setShowComments(!showComments)}>
+              <MessageCircle size={24} />
+            </button>
+            <button className="btn-icon action-btn">
+              <Share2 size={24} />
+            </button>
           </div>
-        </div>
-        <button className="btn-icon">
-          <MoreHorizontal size={20} />
-        </button>
-      </div>
-      
-      <div className="post-image-container">
-        <img src={imageUrl} alt="Post content" className="post-image" />
-      </div>
-      
-      <div className="post-actions">
-        <div className="action-group">
-          <button className="btn-icon action-btn like-btn">
-            <Heart size={24} />
-          </button>
           <button className="btn-icon action-btn">
-            <MessageCircle size={24} />
-          </button>
-          <button className="btn-icon action-btn">
-            <Share2 size={24} />
+            <Bookmark size={24} />
           </button>
         </div>
-        <button className="btn-icon action-btn">
-          <Bookmark size={24} />
-        </button>
-      </div>
-      
-      <div className="post-content">
-        <div className="likes-count">
-          <span className="text-gradient font-bold">{likes} likes</span>
+        
+        <div className="post-content">
+          <div className="likes-count">
+            <span className="text-gradient font-bold">{post.userLikes?.length || 0} likes</span>
+          </div>
+          <div className="caption-container">
+            <span className="username font-bold">{username}</span>
+            <span className="caption">{post.caption}</span>
+          </div>
+          
+          {(post.comments?.length || 0) > 0 && !showComments && (
+            <button className="view-comments" onClick={() => setShowComments(true)}>
+              View all {post.comments?.length} comments
+            </button>
+          )}
+
+          {showComments && (
+            <div className="comments-section animate-fade-in">
+              <div className="comments-list">
+                {post.comments?.map(c => (
+                  <div key={c.id} className="comment-item">
+                    <span className="username font-bold">{c.createdBy?.username || 'Unknown'}</span>
+                    <span className="comment-text">{c.comment}</span>
+                  </div>
+                ))}
+              </div>
+              {currentUser && (
+                <form className="comment-form" onSubmit={submitComment}>
+                  <input
+                    type="text"
+                    placeholder="Add a comment..."
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    disabled={isCommenting}
+                    maxLength={2000}
+                  />
+                  <button 
+                    type="submit" 
+                    className="post-comment-btn" 
+                    disabled={!commentText.trim() || isCommenting}
+                  >
+                    <Send size={18} />
+                  </button>
+                </form>
+              )}
+            </div>
+          )}
         </div>
-        <div className="caption-container">
-          <span className="username font-bold">{username}</span>
-          <span className="caption">{caption}</span>
+      </article>
+
+      {isZoomed && (
+        <div className="zoom-modal-overlay" onClick={() => setIsZoomed(false)}>
+          <button className="zoom-close-btn" onClick={() => setIsZoomed(false)}>
+            <X size={32} />
+          </button>
+          <img src={post.imageUrl} alt="Zoomed content" className="zoomed-image animate-fade-in" onClick={e => e.stopPropagation()} />
         </div>
-        <button className="view-comments">View all comments</button>
-      </div>
-    </article>
+      )}
+    </>
   );
-};
+});
 
 export default PostCard;
+PostCard.displayName = 'PostCard';

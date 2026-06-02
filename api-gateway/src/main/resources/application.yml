@@ -1,5 +1,6 @@
 server:
   port: 8080
+  forward-headers-strategy: framework
 
 spring:
   application:
@@ -9,7 +10,9 @@ spring:
       globalcors:
         corsConfigurations:
           '[/**]':
-            allowedOrigins: "*"
+            allowedOrigins:
+              - "http://localhost:3000"
+              - "http://127.0.0.1:3000"
             allowedMethods:
               - GET
               - POST
@@ -17,6 +20,7 @@ spring:
               - DELETE
               - OPTIONS
             allowedHeaders: "*"
+            allowCredentials: true
       routes:
         # Media Service
         - id: media-service
@@ -28,7 +32,7 @@ spring:
         - id: profile-service
           uri: http://${PROFILE_SERVICE_HOST:localhost}:8084
           predicates:
-            - Path=/profiles/**, /followers/**
+            - Path=/profiles/**, /followers/**, /follow/**
 
         # Post Service
         - id: post-service
@@ -48,14 +52,14 @@ spring:
           predicates:
             - Path=/gs-guide-websocket/**, /notifications/**
 
-        # Monolith / Auth (Fallback for auth logic if any left in user service)
+        # Monolith / Auth
         - id: user-service
-          uri: http://${USER_SERVICE_HOST:localhost}:8081
+          uri: http://${USER_SERVICE_HOST:localhost}:${USER_SERVICE_PORT:8081}
           predicates:
-            - Path=/oauth2/**, /login/**, /users/**
+            - Path=/oauth2/**, /login/**, /users/**, /auth/**
 
 management:
   endpoints:
     web:
       exposure:
-        include: gateway
+        include: gateway,health

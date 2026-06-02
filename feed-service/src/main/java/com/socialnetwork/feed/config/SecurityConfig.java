@@ -22,7 +22,9 @@ public class SecurityConfig {
                 .requestMatchers(new AntPathRequestMatcher("/swagger-ui/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/api-docs/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/actuator/**")).permitAll()
-                .anyRequest().authenticated()
+                .requestMatchers(new AntPathRequestMatcher("/dynamic-feeds/**")).authenticated()
+                .requestMatchers(new AntPathRequestMatcher("/precomputed-feeds/**")).authenticated()
+                .anyRequest().permitAll()
             )
             .csrf(AbstractHttpConfigurer::disable);
         return http.build();

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import { X, Heart, MessageCircle, UserPlus } from 'lucide-react';
+import { X, Heart, MessageCircle, Image as ImageIcon } from 'lucide-react';
+import { type ProfileDto } from '../services/api';
 import './NotificationDrawer.css';
 
 interface NotificationDrawerProps {
@@ -12,30 +13,14 @@ interface NotificationDrawerProps {
 
 interface Notification {
   id: number;
-  fromUser: string;
-  avatarUrl: string;
-  type: 'LIKE' | 'COMMENT' | 'FOLLOW';
+  fromUser: ProfileDto;
+  notificationType: 'NEW_POST' | 'LIKE_YOUR_POST' | 'COMMENT_YOUR_POST';
   postId?: number;
   createdAt: string;
 }
 
 const NotificationDrawer = ({ isOpen, onClose, username }: NotificationDrawerProps) => {
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: 1,
-      fromUser: 'neon_dreamer',
-      avatarUrl: 'https://i.pravatar.cc/150?img=32',
-      type: 'LIKE',
-      createdAt: 'Just now'
-    },
-    {
-      id: 2,
-      fromUser: 'cyber_ninja',
-      avatarUrl: 'https://i.pravatar.cc/150?img=11',
-      type: 'COMMENT',
-      createdAt: '2 hours ago'
-    }
-  ]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   useEffect(() => {
     // Only connect if the drawer is open or if we want background notifications
@@ -75,18 +60,19 @@ const NotificationDrawer = ({ isOpen, onClose, username }: NotificationDrawerPro
 
   const renderIcon = (type: string) => {
     switch (type) {
-      case 'LIKE': return <Heart size={16} className="notif-icon heart" />;
-      case 'COMMENT': return <MessageCircle size={16} className="notif-icon comment" />;
-      case 'FOLLOW': return <UserPlus size={16} className="notif-icon follow" />;
+      case 'LIKE_YOUR_POST': return <Heart size={16} className="notif-icon heart" />;
+      case 'COMMENT_YOUR_POST': return <MessageCircle size={16} className="notif-icon comment" />;
+      case 'NEW_POST': return <ImageIcon size={16} className="notif-icon follow" />;
       default: return null;
     }
   };
 
   const renderMessage = (notif: Notification) => {
-    switch (notif.type) {
-      case 'LIKE': return <span><strong className="text-primary">{notif.fromUser}</strong> liked your post.</span>;
-      case 'COMMENT': return <span><strong className="text-primary">{notif.fromUser}</strong> commented on your post.</span>;
-      case 'FOLLOW': return <span><strong className="text-primary">{notif.fromUser}</strong> started following you.</span>;
+    const username = notif.fromUser?.username || 'Someone';
+    switch (notif.notificationType) {
+      case 'LIKE_YOUR_POST': return <span><strong className="text-primary">{username}</strong> liked your post.</span>;
+      case 'COMMENT_YOUR_POST': return <span><strong className="text-primary">{username}</strong> commented on your post.</span>;
+      case 'NEW_POST': return <span><strong className="text-primary">{username}</strong> published a new post.</span>;
       default: return <span>New notification</span>;
     }
   };
@@ -115,9 +101,9 @@ const NotificationDrawer = ({ isOpen, onClose, username }: NotificationDrawerPro
             notifications.map(notif => (
               <div key={notif.id} className="notification-item animate-fade-in">
                 <div className="avatar-ring notif-avatar-ring">
-                  <img src={notif.avatarUrl || 'https://i.pravatar.cc/150'} alt={notif.fromUser} className="avatar-img notif-avatar" />
+                  <img src={notif.fromUser?.profileImageUrl || 'https://i.pravatar.cc/150'} alt={notif.fromUser?.username} className="avatar-img notif-avatar" />
                   <div className="icon-badge">
-                    {renderIcon(notif.type)}
+                    {renderIcon(notif.notificationType)}
                   </div>
                 </div>
                 <div className="notif-text">

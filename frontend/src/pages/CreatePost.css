@@ -1,0 +1,137 @@
+.create-post-container {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 0;
+}
+
+.create-post-card {
+  width: 100%;
+  max-width: 600px;
+  padding: 2.5rem;
+}
+
+.create-post-card h2 {
+  font-size: 1.8rem;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.error-message {
+  background: rgba(250, 112, 154, 0.1);
+  border-left: 4px solid var(--accent-pink);
+  color: var(--accent-pink);
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.create-post-form {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.image-upload-section {
+  width: 100%;
+}
+
+.hidden-file-input {
+  display: none;
+}
+
+.image-upload-label {
+  display: block;
+  width: 100%;
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-md);
+  padding: 3rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.image-upload-label:hover {
+  border-color: var(--accent-cyan);
+  background: rgba(0, 242, 254, 0.05);
+}
+
+.upload-placeholder span {
+  display: block;
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.upload-placeholder p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.image-preview {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.image-preview img {
+  width: 100%;
+  height: auto;
+  display: block;
+  max-height: 500px;
+  object-fit: cover;
+}
+
+.btn-remove-image {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  backdrop-filter: blur(4px);
+  transition: background var(--transition-fast);
+}
+
+.btn-remove-image:hover {
+  background: var(--accent-pink);
+}
+
+.caption-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  outline: none;
+  font-family: inherit;
+  font-size: 1rem;
+  resize: vertical;
+  min-height: 120px;
+}
+
+.caption-input:focus {
+  border-color: var(--accent-purple);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1.1rem;
+  letter-spacing: 0.5px;
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}

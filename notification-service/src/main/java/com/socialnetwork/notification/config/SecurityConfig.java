@@ -22,8 +22,7 @@ public class SecurityConfig {
                 .requestMatchers(new AntPathRequestMatcher("/actuator/**")).permitAll()
                 .anyRequest().authenticated()
             )
-            .csrf(AbstractHttpConfigurer::disable)
-            .cors(AbstractHttpConfigurer::disable);
+            .csrf(AbstractHttpConfigurer::disable);
         return http.build();
     }
 }

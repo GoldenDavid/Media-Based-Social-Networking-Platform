@@ -4,7 +4,7 @@ import com.socialnetwork.grpc.media.MediaServiceGrpc;
 import com.socialnetwork.grpc.media.UploadImageRequest;
 import com.socialnetwork.grpc.media.UploadImageResponse;
 import com.socialnetwork.profile.dto.ProfileDto;
-import com.socialnetwork.profile.dto.UserPrincipal;
+import com.socialnetwork.common.security.UserPrincipal;
 import com.socialnetwork.profile.dto.UpdateProfileImageRequest;
 import com.socialnetwork.profile.dto.UpdateProfileRequest;
 import com.socialnetwork.profile.model.Profile;
