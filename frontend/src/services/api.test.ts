@@ -20,9 +20,9 @@ describe('api.unwrap', () => {
       success: true,
       message: 'ok',
       timestamp: '2026-06-02T00:00:00Z',
-      data: { profile: { id: 1, username: 'alex_cyber' } },
+      data: { profile: { id: 1, username: 'alice_dev' } },
     };
     const { profile } = unwrap(wrapped);
-    expect(profile.username).toBe('alex_cyber');
+    expect(profile.username).toBe('alice_dev');
   });
 });

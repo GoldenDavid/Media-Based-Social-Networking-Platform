@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { X, Heart, MessageCircle, Image as ImageIcon } from 'lucide-react';
-import { type ProfileDto } from '../services/api';
+import { api, type NotificationDto } from '../services/api';
 import './NotificationDrawer.css';
 
 interface NotificationDrawerProps {
@@ -11,17 +11,35 @@ interface NotificationDrawerProps {
   username: string; // The logged-in user's username
 }
 
-interface Notification {
-  id: number;
-  fromUser: ProfileDto;
-  notificationType: 'NEW_POST' | 'LIKE_YOUR_POST' | 'COMMENT_YOUR_POST';
-  postId?: number;
-  createdAt: string;
-}
-
 const NotificationDrawer = ({ isOpen, onClose, username }: NotificationDrawerProps) => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<NotificationDto[]>([]);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
 
+  // Load persisted history when the drawer first opens.
+  useEffect(() => {
+    if (!isOpen || historyLoaded) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const resp = await api.getMyNotifications(1, 20);
+        if (cancelled) return;
+        // Deduplicate against any live notifications already in state.
+        setNotifications(prev => {
+          const seen = new Set(prev.map(n => n.id));
+          return [...prev, ...resp.notifications.filter(n => !seen.has(n.id))];
+        });
+        setHistoryLoaded(true);
+      } catch (err) {
+        if (cancelled) return;
+        setHistoryError((err as Error).message);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isOpen, historyLoaded]);
+
+  // WebSocket subscription for live notifications — always on when the
+  // component is mounted.
   useEffect(() => {
     // WebSocket path: matches gateway route `/gs-guide-websocket/**` exposed
     // by `notification-service` in api-gateway/application.yml. The frontend
@@ -49,8 +67,11 @@ const NotificationDrawer = ({ isOpen, onClose, username }: NotificationDrawerPro
       // Subscribe to personal notifications
       client.subscribe(`/topic/notifications/${username}`, (message) => {
         if (message.body) {
-          const newNotif = JSON.parse(message.body);
-          setNotifications(prev => [newNotif, ...prev]);
+          const newNotif: NotificationDto = JSON.parse(message.body);
+          setNotifications(prev => {
+            if (prev.some(n => n.id === newNotif.id)) return prev;
+            return [newNotif, ...prev];
+          });
         }
       });
     };
@@ -76,7 +97,7 @@ const NotificationDrawer = ({ isOpen, onClose, username }: NotificationDrawerPro
     }
   };
 
-  const renderMessage = (notif: Notification) => {
+  const renderMessage = (notif: NotificationDto) => {
     const username = notif.fromUser?.username || 'Someone';
     switch (notif.notificationType) {
       case 'LIKE_YOUR_POST': return <span><strong className="text-primary">{username}</strong> liked your post.</span>;
@@ -89,11 +110,11 @@ const NotificationDrawer = ({ isOpen, onClose, username }: NotificationDrawerPro
   return (
     <>
       {/* Overlay */}
-      <div 
-        className={`drawer-overlay ${isOpen ? 'open' : ''}`} 
+      <div
+        className={`drawer-overlay ${isOpen ? 'open' : ''}`}
         onClick={onClose}
       />
-      
+
       {/* Drawer */}
       <div className={`notification-drawer glass-panel ${isOpen ? 'open' : ''}`}>
         <div className="drawer-header">
@@ -102,8 +123,13 @@ const NotificationDrawer = ({ isOpen, onClose, username }: NotificationDrawerPro
             <X size={24} />
           </button>
         </div>
-        
+
         <div className="drawer-content">
+          {historyError && (
+            <div className="notif-banner" role="alert">
+              Could not load history: {historyError}
+            </div>
+          )}
           {notifications.length === 0 ? (
             <div className="empty-state">No new notifications</div>
           ) : (

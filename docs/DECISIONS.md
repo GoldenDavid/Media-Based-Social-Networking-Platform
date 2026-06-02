@@ -307,3 +307,5 @@ have the same problem.
 | Phase 1.5 | 015 | Profile controller responses wrap in `BaseResponse` (match post-service contract) | Accepted |
 | Phase 1.5 | 016 | `NotificationEvent` + `NotificationType` live in `socialnetwork-common` (shared classloader for RabbitMQ JDK serialization) | Accepted |
 | Phase 1.6 | 017 | `FollowerController` responses wrap in `BaseResponse` (typed `FollowersResponse` / `FollowingsResponse` / `FollowResponse`) | Accepted |
+| Phase 5   | 018 | Default feed is dynamic; precomputed feed is opt-in (documented in `plan.md`) | Accepted |
+| Phase 5.3 | 019 | Notification history endpoint `GET /notifications/me`; the session UUID is translated to a numeric `profileId` via the profile-service gRPC `getOrCreateProfileByUserId` | Accepted |

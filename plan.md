@@ -215,6 +215,8 @@ In [PostServiceImpl.createPost](post-service/src/main/java/com/socialnetwork/pos
 
 ## Phase 5 — Feature completion and hardening
 
+> **Default feed: dynamic.** `Home.tsx` calls `api.getFeed('/dynamic-feeds')`. The precomputed feed (`/precomputed-feeds`, populated by the RabbitMQ fan-out) is available as an opt-in via a UI toggle (not yet shipped). The dynamic feed pulls from MySQL via the post-service gRPC `getPostsByAuthors` and is the source of truth; the precomputed feed is an optimisation that may lag by seconds when the fan-out is in flight.
+
 **Goal:** Close gaps between UI and backend capabilities.
 
 | Step | Task |

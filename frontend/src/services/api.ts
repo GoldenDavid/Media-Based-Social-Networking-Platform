@@ -50,6 +50,32 @@ export interface CreatePostResponse {
   post: PostDto;
 }
 
+export interface FollowersResponse {
+  totalPage: number;
+  totalCount: number;
+  followers: ProfileDto[];
+}
+
+export interface FollowingsResponse {
+  totalPage: number;
+  totalCount: number;
+  followings: ProfileDto[];
+}
+
+export interface NotificationDto {
+  id: number;
+  fromUser: ProfileDto;
+  notificationType: 'NEW_POST' | 'LIKE_YOUR_POST' | 'COMMENT_YOUR_POST';
+  postId?: number;
+  createdAt: string;
+}
+
+export interface NotificationsResponse {
+  totalPage: number;
+  totalCount: number;
+  notifications: NotificationDto[];
+}
+
 /**
  * Unwraps a `BaseResponse<T>` envelope. Backend wraps most REST endpoints in
  * `{ success, message, timestamp, data }`; this helper exposes the inner `T`.
@@ -265,17 +291,16 @@ export const api = {
     if (body?.followed) {
       throw new Error('Unfollow request did not confirm');
     }
+  },
+
+  // ── Notifications ────────────────────────────────────────────────────────
+
+  getMyNotifications: async (page: number = 1, limit: number = 20): Promise<NotificationsResponse> => {
+    const wrapped = await apiFetch<BaseResponse<NotificationsResponse>>(
+      `/notifications/me?page=${page}&limit=${limit}`
+    );
+    const body = unwrap(wrapped);
+    body.notifications?.forEach((n) => resolveProfileImages(n.fromUser));
+    return body;
   }
 };
-
-export interface FollowersResponse {
-  totalPage: number;
-  totalCount: number;
-  followers: ProfileDto[];
-}
-
-export interface FollowingsResponse {
-  totalPage: number;
-  totalCount: number;
-  followings: ProfileDto[];
-}

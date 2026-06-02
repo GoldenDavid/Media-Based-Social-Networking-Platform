@@ -10,39 +10,48 @@ Versioning: [SemVer](https://semver.org/).
 ## [Unreleased]
 
 ### Added
-- Profile page now shows real follower/following counts (Phase 1.6).
+- Notification history endpoint `GET /api/notifications/me?page=&limit=`
+  (Phase 5.3). Returns the persisted notification history for the
+  authenticated user, most recent first. The frontend
+  `NotificationDrawer` now loads history the first time it opens and
+  merges it with live STOMP pushes (deduplicated by `id`).
+- New `NotificationService` and `NotificationController` in
+  notification-service. The `profile-service` gRPC client in
+  notification-service gained a `getProfile(UserPrincipal)` overload
+  to translate the session UUID into a numeric `profileId` (the
+  notification table is keyed on the int).
+- NotificationEventPersistenceTest: `@DataJpaTest` slice that asserts
+  the JPA storage contract (the `serialVersionUID` on
+  `NotificationEvent` is also pinned).
+- Phase 5.4 documented: default feed is `/dynamic-feeds`; the
+  precomputed feed is opt-in (UI toggle pending).
+- Profile page shows real follower / following counts (Phase 1.6).
   `api.getFollowers` / `api.getFollowings` hit the
   `/follow/user/followers/{id}` and `/follow/user/followings/{id}`
-  endpoints; counts are displayed next to the post count, or
-  `0` if the call fails on a fresh account.
+  endpoints; counts are displayed next to the post count, or `0` if
+  the call fails on a fresh account.
 
 ### Fixed
 - `profile-service` `FollowerController` responses now use typed
   `BaseResponse<FollowersResponse>` / `BaseResponse<FollowingsResponse>`
   / `BaseResponse<FollowResponse>` (Phase 1.6) instead of the awkward
   `Map.of("data", Map.of("totalPage", ..., "followers", ...))` shape
-  that shadowed the `BaseResponse.data` field. New DTOs
-  `FollowersResponse` / `FollowingsResponse` / `FollowResponse` expose
-  `totalPage`, `totalCount`, and the list / action result. Completes
-  the ADR-002 contract alignment started in Phase 1.5.
-
-### Fixed
+  that shadowed the `BaseResponse.data` field.
 - `profile-service` `/profiles/me`, `/profiles/{id}`, `POST /profiles`,
   `POST /profiles/profile-image` now wrap their responses in
   `BaseResponse<Map<String, ...>>` (Phase 1.5) so the frontend
   `unwrap()` helper returns the expected `profile` / `url` fields.
-  Aligns the profile-service contract with the post-service contract
-  (which already used `BaseResponse`).
 - `notification-event-queue` now has a real producer:
   `post-service` publishes a `NotificationEvent(type=NEW_POST)` to every
   follower of the post author on `createPost()`. The event class
-  `com.socialnetwork.common.event.NotificationEvent` (and its
-  `NotificationType` enum) was lifted out of `notification-service` and
-  into `socialnetwork-common` so the publisher and consumer share one
-  classloader (JDK serialization). NotificationService's
-  `MessageQueueConfig` still owns the queue and DLX declaration; the
-  post-service owns the `MessageQueueConfig.NOTIFICATION_EVENT_QUEUE`
-  constant for routing.
+  lives in `com.socialnetwork.common.event` (was in
+  `notification-service`) so the publisher and consumer share one
+  classloader (required for JDK serialization).
+- FE test `alex_cyber` literal replaced with `alice_dev` to align
+  with the seed data convention (Phase 5.6).
+  NotificationService's `MessageQueueConfig` still owns the queue
+  and DLX declaration; the post-service owns the
+  `MessageQueueConfig.NOTIFICATION_EVENT_QUEUE` constant for routing.
 
 ### Changed
 - `scripts/smoke-test.sh` and `scripts/smoke-test.ps1` added (Phase 1.5):
