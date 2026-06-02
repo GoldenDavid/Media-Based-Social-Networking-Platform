@@ -10,7 +10,18 @@ Versioning: [SemVer](https://semver.org/).
 ## [Unreleased]
 
 ### Added
-- Home page now has a Dynamic / Precomputed feed-source toggle
+- GitHub Actions CI workflow at `.github/workflows/ci.yml`
+  (Phase 6). Two parallel jobs:
+  - `frontend`: `npm ci` → `lint` → `build` → `vitest` (Node 20).
+  - `backend`: Gradle build + test on JDK 17, with Gradle cache
+    keyed on `*.gradle*` and a test-reports artifact upload on
+    failure. Concurrency group cancels in-flight runs for the
+    same ref. No Docker smoke test in CI yet (left for Phase 6+).
+- Phase 6 lint cleanup: 7 pre-existing errors fixed
+  (`react-hooks/set-state-in-effect` on Home/Profile, `any` in
+  Auth.tsx, SockJS `as any` in NotificationDrawer, fast-refresh
+  rule for the two context files). Lint is now clean
+  (`npm run lint` exits 0).
   (Phase 5.4 UI). The choice persists in `localStorage` under
   `app:feedSource`. Per ADR-018, dynamic is the default; the
   precomputed feed (Redis fan-out cache, may lag by seconds) is

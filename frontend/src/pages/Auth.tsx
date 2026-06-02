@@ -20,8 +20,9 @@ const Auth = () => {
         setAuthMode('login');
         setAuthError('Registration successful! Please log in.');
       }
-    } catch (err: any) {
-      setAuthError(err.message || 'Authentication failed');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Authentication failed';
+      setAuthError(message);
     }
   };
 

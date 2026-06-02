@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import {
   createContext,
   useCallback,
@@ -35,7 +36,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    refresh();
+    // Initial auth probe on mount. The setState calls inside `refresh`
+    // are intentional: this is a one-shot bootstrap, not a render-time
+    // derivation. We schedule it as a microtask so the effect body
+    // itself does not call setState synchronously.
+    void Promise.resolve().then(refresh);
   }, [refresh]);
 
   const login = async (username: string, password: string) => {

@@ -52,7 +52,10 @@ const NotificationDrawer = ({ isOpen, onClose, username }: NotificationDrawerPro
       withCredentials: true,
     } as SockJS.Options);
     const client = new Client({
-      webSocketFactory: () => socket as any,
+      // SockJS type defs are incomplete (`withCredentials` was added in a
+      // later @types/sockjs-client than this project ships). The runtime
+      // accepts it, and the cast is contained to the factory.
+      webSocketFactory: () => socket as unknown as WebSocket,
       connectHeaders: {},
       debug: function (str) {
         console.log('STOMP: ' + str);

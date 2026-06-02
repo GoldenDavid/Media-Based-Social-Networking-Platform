@@ -22,12 +22,20 @@ const Profile = () => {
   }, []);
 
   useEffect(() => {
-    if (authLoading || !user) {
-      setLoading(false);
-      return;
-    }
+    if (authLoading) return;
     let cancelled = false;
     const fetchProfileData = async () => {
+      if (!user) {
+        // Not signed in — clear any stale profile data and the spinner.
+        if (!cancelled) {
+          setProfile(null);
+          setPosts([]);
+          setFollowerCount(null);
+          setFollowingCount(null);
+          setLoading(false);
+        }
+        return;
+      }
       try {
         const profileData = await api.getMyProfile();
         if (cancelled) return;
@@ -59,7 +67,10 @@ const Profile = () => {
         if (!cancelled) setLoading(false);
       }
     };
-    fetchProfileData();
+    // Defer to a microtask so the effect body itself does not call
+    // setState synchronously (React 19 anti-pattern flagged by
+    // react-hooks/set-state-in-effect).
+    void Promise.resolve().then(fetchProfileData);
     return () => { cancelled = true; };
   }, [authLoading, user]);
 

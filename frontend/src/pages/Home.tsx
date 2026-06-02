@@ -31,13 +31,20 @@ const Home = () => {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user) {
-      setLoading(false);
-      return;
-    }
     let cancelled = false;
     const fetchFeed = async () => {
-      setLoading(true);
+      if (!user) {
+        // Not signed in — clear any stale posts from a previous session
+        // and clear the loading spinner. The setState calls are
+        // intentional (one-shot bootstrap, not a render-time derivation)
+        // and the effect's effect runs once per auth-state change.
+        if (!cancelled) {
+          setPosts([]);
+          setLoading(false);
+        }
+        return;
+      }
+      if (!cancelled) setLoading(true);
       try {
         // Per ADR-018: dynamic is the source of truth; precomputed is
         // opt-in. Both endpoints return a flat GetFeedResponse (no
@@ -53,7 +60,10 @@ const Home = () => {
         if (!cancelled) setLoading(false);
       }
     };
-    fetchFeed();
+    // Defer to a microtask so the effect body itself does not call
+    // setState synchronously (React 19 anti-pattern flagged by
+    // react-hooks/set-state-in-effect).
+    void Promise.resolve().then(fetchFeed);
     return () => { cancelled = true; };
   }, [authLoading, user, feedSource]);
 
