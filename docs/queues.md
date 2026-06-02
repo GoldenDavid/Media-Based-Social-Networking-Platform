@@ -32,7 +32,8 @@ _No custom exchanges yet. If you add one, document it here._
 | Queue | Durable | Auto-delete | Producer | Consumer | Payload | Notes |
 |---|---|---|---|---|---|---|
 | `after-create-post-queue` | yes | no | `post-service` (`PostServiceImpl.createPost`) | `feed-service` (`PushFeedConsumer`) | `int postId` (gRPC-style integer body) | Triggers feed fan-out to followers |
-| `notification-event-queue` | yes | no | _(none yet — see Phase 4)_ | `notification-service` (`NotificationEventConsumer`) | `NotificationEvent` (JSON or serialized) | Will be populated by `post-service` + `profile-service` in Phase 4 |
+| `notification-event-queue` | yes | no | _(still missing — see Migration notes below)_ | `notification-service` (`NotificationEventConsumer`) | `NotificationEvent` (JSON or serialized) | Configured in `notification-service/.../MessageQueueConfig.java`; **no producer in this worktree** |
+| `notification-event-queue.dlq` | yes | no | _(auto — RabbitMQ DLX)_ | _(none — manual drain only)_ | Same body as the main queue | Dead-letter queue for `notification-event-queue` (Phase 1) |
 
 ---
 
@@ -65,19 +66,30 @@ _No custom exchanges yet. If you add one, document it here._
 
 ### notification-service
 - `NotificationEventConsumer` listens to `notification-event-queue`. Hydrates the event via `profile-service` gRPC `getProfile`, saves a `Notification` row, then pushes to WebSocket `/topic/notifications/{username}`.
+- `MessageQueueConfig` declares the main queue with a dead-letter exchange pointing to the default exchange and routing key `notification-event-queue.dlq`. The DLQ itself is declared as a plain durable queue.
 
 ---
 
 ## Dead-letter queues
 
-_None configured. Add a DLQ for any consumer that can fail in a way that shouldn't block the main queue._
+| Queue | Source | Declared by | Purpose |
+|---|---|---|---|
+| `notification-event-queue.dlq` | `notification-event-queue` (via DLX) | `notification-service` (`MessageQueueConfig.notificationEventDlq`) | Captures poison messages from the notification consumer so a malformed event cannot block the main queue. Add other DLQs as you introduce them. |
 
 ---
 
 ## Migration notes
 
 - Phase 0: topology documented (this file).
-- Phase 4: add `notification-event-queue` producer to `post-service` (`createPost`, `likePost`, `createComment`) and `profile-service` (`followUser`).
+- Phase 1: dead-letter queue `notification-event-queue.dlq` introduced in
+  `notification-service` (see `MessageQueueConfig.notificationEventDlq`).
+- Phase 1 (open): `notification-event-queue` still has **no producer**.
+  `post-service` only publishes to `after-create-post-queue`; the
+  notification consumer will receive nothing until a producer is added.
+  Tracked follow-up: wire `PostServiceImpl.createPost`,
+  `PostServiceImpl.likePost`, and `PostServiceImpl.createComment` in
+  `post-service` to publish a `NotificationEvent`; wire
+  `ProfileServiceImpl.followUser` in `profile-service` similarly.
 - Phase 5: add `after-create-post-queue` producer to `profile-service` for follow events (so followers get feed updates when a followed user creates a post via fan-out).
 
 ---
@@ -96,6 +108,9 @@ docker exec -it <rabbitmq-container> rabbitmqctl list_bindings
 
 # Purge a queue (dev only)
 docker exec -it <rabbitmq-container> rabbitmqctl purge_queue after-create-post-queue
+
+# Drain the notification DLQ (dev only)
+docker exec -it <rabbitmq-container> rabbitmqctl purge_queue notification-event-queue.dlq
 ```
 
 Management UI: <http://localhost:15672> (guest/guest in dev).
