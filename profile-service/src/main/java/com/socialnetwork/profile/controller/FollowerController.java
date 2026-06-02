@@ -1,8 +1,11 @@
 package com.socialnetwork.profile.controller;
 
+import com.socialnetwork.common.dto.BaseResponse;
 import com.socialnetwork.common.security.UserPrincipal;
+import com.socialnetwork.profile.dto.FollowResponse;
 import com.socialnetwork.profile.dto.FollowUserRequest;
-import com.socialnetwork.profile.dto.ProfileDto;
+import com.socialnetwork.profile.dto.FollowersResponse;
+import com.socialnetwork.profile.dto.FollowingsResponse;
 import com.socialnetwork.profile.dto.UnfollowUserRequest;
 import com.socialnetwork.profile.service.FollowerService;
 
@@ -15,11 +18,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-import java.util.List;
-
-@RestController
 @Slf4j
+@RestController
 @RequestMapping(path = "/follow")
 @Validated
 @RequiredArgsConstructor
@@ -28,58 +28,64 @@ public class FollowerController {
     private final FollowerService followerService;
 
     @GetMapping("/user/followers/{id}")
-    public ResponseEntity<?> getFollowers(
+    public ResponseEntity<BaseResponse<FollowersResponse>> getFollowers(
             @PathVariable int id,
             @RequestParam("page") @Min(1) Integer page,
             @RequestParam("limit") @Min(1) int limit) {
-        
+
         log.info("getFollowers: userId={}, page={}, limit={}", id, page, limit);
-        List<ProfileDto> followers = followerService.getFollowers(id, page, limit);
-        int totalFollowers = followerService.countFollowers(id);
-        int totalPage = (int) Math.ceil((double) totalFollowers / limit);
-        
-        return ResponseEntity.ok(Map.of(
-                "data", Map.of(
-                        "totalPage", totalPage,
-                        "followers", followers
-                )
-        ));
+        var followers = followerService.getFollowers(id, page, limit);
+        int totalCount = followerService.countFollowers(id);
+        int totalPage = (int) Math.ceil((double) totalCount / limit);
+        var body = FollowersResponse.builder()
+                .totalPage(totalPage)
+                .totalCount(totalCount)
+                .followers(followers)
+                .build();
+        return ResponseEntity.ok(BaseResponse.ok(body));
     }
 
     @GetMapping("/user/followings/{id}")
-    public ResponseEntity<?> getFollowing(
+    public ResponseEntity<BaseResponse<FollowingsResponse>> getFollowings(
             @PathVariable int id,
-            @RequestParam("page") @Min(1) int page,
+            @RequestParam("page") @Min(1) Integer page,
             @RequestParam("limit") @Min(1) int limit) {
-            
+
         log.info("getFollowings: userId={}, page={}, limit={}", id, page, limit);
-        List<ProfileDto> followings = followerService.getFollowings(id, page, limit);
-        int totalFollowings = followerService.countFollowings(id);
-        int totalPage = (int) Math.ceil((double) totalFollowings / limit);
-        
-        return ResponseEntity.ok(Map.of(
-                "data", Map.of(
-                        "totalPage", totalPage,
-                        "followings", followings
-                )
-        ));
+        var followings = followerService.getFollowings(id, page, limit);
+        int totalCount = followerService.countFollowings(id);
+        int totalPage = (int) Math.ceil((double) totalCount / limit);
+        var body = FollowingsResponse.builder()
+                .totalPage(totalPage)
+                .totalCount(totalCount)
+                .followings(followings)
+                .build();
+        return ResponseEntity.ok(BaseResponse.ok(body));
     }
 
     @PostMapping
-    public ResponseEntity<?> folowUser(
-            @Valid @RequestBody FollowUserRequest request, 
+    public ResponseEntity<BaseResponse<FollowResponse>> followUser(
+            @Valid @RequestBody FollowUserRequest request,
             Authentication authentication) {
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
         followerService.followUser(userPrincipal, request.getProfileId());
-        return ResponseEntity.ok(Map.of("data", Map.of()));
+        var body = FollowResponse.builder()
+                .followed(true)
+                .profileId(request.getProfileId())
+                .build();
+        return ResponseEntity.ok(BaseResponse.ok(body));
     }
 
     @DeleteMapping
-    public ResponseEntity<?> unfolowUser(
-            @Valid @RequestBody UnfollowUserRequest request, 
+    public ResponseEntity<BaseResponse<FollowResponse>> unfollowUser(
+            @Valid @RequestBody UnfollowUserRequest request,
             Authentication authentication) {
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
         followerService.unfollowUser(userPrincipal, request.getProfileId());
-        return ResponseEntity.ok(Map.of("data", Map.of()));
+        var body = FollowResponse.builder()
+                .followed(false)
+                .profileId(request.getProfileId())
+                .build();
+        return ResponseEntity.ok(BaseResponse.ok(body));
     }
 }

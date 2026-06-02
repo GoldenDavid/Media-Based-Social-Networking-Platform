@@ -9,6 +9,8 @@ const Profile = () => {
   const { user, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<ProfileDto | null>(null);
   const [posts, setPosts] = useState<PostDto[]>([]);
+  const [followerCount, setFollowerCount] = useState<number | null>(null);
+  const [followingCount, setFollowingCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPost, setSelectedPost] = useState<PostDto | null>(null);
 
@@ -34,6 +36,22 @@ const Profile = () => {
         if (profileData?.id) {
           const userPosts = await api.getUserPosts(profileData.id);
           if (!cancelled) setPosts(userPosts || []);
+
+          // Best-effort: fetch follower/following counts. The endpoints may 404
+          // on a brand-new account with no social graph yet, or fail if the
+          // FollowerController isn't deployed — show "0" rather than "-" then.
+          try {
+            const followers = await api.getFollowers(profileData.id, 1, 1);
+            if (!cancelled) setFollowerCount(followers.totalCount);
+          } catch {
+            if (!cancelled) setFollowerCount(0);
+          }
+          try {
+            const followings = await api.getFollowings(profileData.id, 1, 1);
+            if (!cancelled) setFollowingCount(followings.totalCount);
+          } catch {
+            if (!cancelled) setFollowingCount(0);
+          }
         }
       } catch (error) {
         console.error("Failed to fetch profile data:", error);
@@ -75,8 +93,8 @@ const Profile = () => {
           
           <div className="profile-stats">
             <span><strong className="text-primary">{posts.length}</strong> posts</span>
-            <span><strong className="text-primary">-</strong> followers</span>
-            <span><strong className="text-primary">-</strong> following</span>
+            <span><strong className="text-primary">{followerCount ?? '-'}</strong> followers</span>
+            <span><strong className="text-primary">{followingCount ?? '-'}</strong> following</span>
           </div>
           
           <div className="profile-bio">

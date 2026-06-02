@@ -215,5 +215,67 @@ export const api = {
       throw new Error(wrapped.message || 'Failed to add comment');
     }
     return resolvePostImages(unwrap(wrapped).post);
+  },
+
+  // ── Follow graph ──────────────────────────────────────────────────────────
+
+  getFollowers: async (userId: number, page: number = 1, limit: number = 20): Promise<FollowersResponse> => {
+    const wrapped = await apiFetch<BaseResponse<FollowersResponse>>(
+      `/follow/user/followers/${userId}?page=${page}&limit=${limit}`
+    );
+    const body = unwrap(wrapped);
+    body.followers?.forEach(resolveProfileImages);
+    return body;
+  },
+
+  getFollowings: async (userId: number, page: number = 1, limit: number = 20): Promise<FollowingsResponse> => {
+    const wrapped = await apiFetch<BaseResponse<FollowingsResponse>>(
+      `/follow/user/followings/${userId}?page=${page}&limit=${limit}`
+    );
+    const body = unwrap(wrapped);
+    body.followings?.forEach(resolveProfileImages);
+    return body;
+  },
+
+  followUser: async (profileId: number): Promise<void> => {
+    const wrapped = await apiFetch<BaseResponse<{ followed: boolean; profileId: number }>>(
+      '/follow',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileId }),
+      }
+    );
+    const body = unwrap(wrapped);
+    if (!body?.followed) {
+      throw new Error('Follow request did not confirm');
+    }
+  },
+
+  unfollowUser: async (profileId: number): Promise<void> => {
+    const wrapped = await apiFetch<BaseResponse<{ followed: boolean; profileId: number }>>(
+      '/follow',
+      {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileId }),
+      }
+    );
+    const body = unwrap(wrapped);
+    if (body?.followed) {
+      throw new Error('Unfollow request did not confirm');
+    }
   }
 };
+
+export interface FollowersResponse {
+  totalPage: number;
+  totalCount: number;
+  followers: ProfileDto[];
+}
+
+export interface FollowingsResponse {
+  totalPage: number;
+  totalCount: number;
+  followings: ProfileDto[];
+}

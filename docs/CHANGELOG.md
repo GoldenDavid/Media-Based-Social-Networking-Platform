@@ -10,7 +10,21 @@ Versioning: [SemVer](https://semver.org/).
 ## [Unreleased]
 
 ### Added
-- _None yet — next batch lands under 0.3.0 once Phase 5 features ship._
+- Profile page now shows real follower/following counts (Phase 1.6).
+  `api.getFollowers` / `api.getFollowings` hit the
+  `/follow/user/followers/{id}` and `/follow/user/followings/{id}`
+  endpoints; counts are displayed next to the post count, or
+  `0` if the call fails on a fresh account.
+
+### Fixed
+- `profile-service` `FollowerController` responses now use typed
+  `BaseResponse<FollowersResponse>` / `BaseResponse<FollowingsResponse>`
+  / `BaseResponse<FollowResponse>` (Phase 1.6) instead of the awkward
+  `Map.of("data", Map.of("totalPage", ..., "followers", ...))` shape
+  that shadowed the `BaseResponse.data` field. New DTOs
+  `FollowersResponse` / `FollowingsResponse` / `FollowResponse` expose
+  `totalPage`, `totalCount`, and the list / action result. Completes
+  the ADR-002 contract alignment started in Phase 1.5.
 
 ### Fixed
 - `profile-service` `/profiles/me`, `/profiles/{id}`, `POST /profiles`,

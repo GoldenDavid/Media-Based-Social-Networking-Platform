@@ -217,6 +217,36 @@ half-applied, the contract was inconsistent.
 - The half-applied ADR-002 is now consistent across the two main
   domain controllers (post + profile).
 
+## ADR-017: `FollowerController` responses wrap in `BaseResponse` (typed DTOs)
+
+**Status:** Accepted (Phase 1.6)
+**Context:** `FollowerController` returned
+`Map.of("data", Map.of("totalPage", ..., "followers", ...))` — a shape
+that shadowed the `BaseResponse.data` field and would have required
+two `unwrap` calls (or a hand-rolled adapter) on the FE. The
+half-applied ADR-002 was still inconsistent here even after ADR-015
+fixed the `ProfileController`. Additionally, the response lacked a
+`totalCount` field, so the FE could not display the real number of
+followers without paginating through everything.
+**Decision:**
+- New typed DTOs in `profile-service/.../dto/`:
+  - `FollowersResponse { int totalPage; int totalCount; List<ProfileDto> followers; }`
+  - `FollowingsResponse { int totalPage; int totalCount; List<ProfileDto> followings; }`
+  - `FollowResponse { boolean followed; int profileId; }`
+- `FollowerController` returns
+  `ResponseEntity<BaseResponse<FollowersResponse>>` (and the
+  `FollowingsResponse` / `FollowResponse` equivalents).
+- The inner map shape is fully replaced — no `Map.of` in the
+  controller body.
+**Consequences:**
+- The FE's `unwrap<T>(resp: BaseResponse<T>): T` helper works
+  uniformly across every read endpoint in the project.
+- A single `api.getFollowers(id, 1, 1)` call gives the FE both the
+  real count and the first page of followers for free.
+- The `POST /follow` and `DELETE /follow` responses are now
+  self-describing (`{ followed, profileId }` instead of an empty
+  `data: {}`).
+
 ## ADR-016: `NotificationEvent` + `NotificationType` live in `socialnetwork-common`
 
 **Status:** Accepted (Phase 1.5)
@@ -276,5 +306,4 @@ have the same problem.
 | Phase 1 | 014 | Frontend `BASE_URL = /api` + `credentials: 'include'` | Accepted |
 | Phase 1.5 | 015 | Profile controller responses wrap in `BaseResponse` (match post-service contract) | Accepted |
 | Phase 1.5 | 016 | `NotificationEvent` + `NotificationType` live in `socialnetwork-common` (shared classloader for RabbitMQ JDK serialization) | Accepted |
-| Phase 1.5 | 015 | Profile controller responses wrap in `BaseResponse` (match post-service contract) | Accepted |
-| Phase 1.5 | 016 | `NotificationEvent` + `NotificationType` live in `socialnetwork-common` (shared classloader for RabbitMQ JDK serialization) | Accepted |
+| Phase 1.6 | 017 | `FollowerController` responses wrap in `BaseResponse` (typed `FollowersResponse` / `FollowingsResponse` / `FollowResponse`) | Accepted |
