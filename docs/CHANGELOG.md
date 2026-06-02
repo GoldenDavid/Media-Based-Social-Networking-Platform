@@ -10,6 +10,14 @@ Versioning: [SemVer](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Home page now has a Dynamic / Precomputed feed-source toggle
+  (Phase 5.4 UI). The choice persists in `localStorage` under
+  `app:feedSource`. Per ADR-018, dynamic is the default; the
+  precomputed feed (Redis fan-out cache, may lag by seconds) is
+  opt-in. Both endpoints return a flat `GetFeedResponse` shape.
+- New test in `frontend/src/services/api.test.ts` pins the
+  flat-shape contract for both feeds so a future backend
+  `BaseResponse` wrap is caught immediately.
 - `LIKE_YOUR_POST` and `COMMENT_YOUR_POST` notification producers
   (Phase 5.7). `PostServiceImpl.likePost` publishes a
   `NotificationEvent` to the post's author; `CommentServiceImpl.createComment`

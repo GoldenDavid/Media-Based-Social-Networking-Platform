@@ -310,3 +310,4 @@ have the same problem.
 | Phase 5   | 018 | Default feed is dynamic; precomputed feed is opt-in (documented in `plan.md`) | Accepted |
 | Phase 5.3 | 019 | Notification history endpoint `GET /notifications/me`; the session UUID is translated to a numeric `profileId` via the profile-service gRPC `getOrCreateProfileByUserId` | Accepted |
 | Phase 5.7 | 020 | Suppress self-notifications for like and comment (actor is the post's author → no event published) | Accepted |
+| Phase 5.4 | 021 | FE persists the Dynamic/Precomputed feed-source choice in `localStorage` under `app:feedSource`; default is Dynamic | Accepted |
