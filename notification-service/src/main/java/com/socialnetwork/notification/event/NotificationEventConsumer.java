@@ -5,6 +5,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
+import com.socialnetwork.common.event.NotificationEvent;
 import com.socialnetwork.notification.config.MessageQueueConfig;
 import com.socialnetwork.notification.dto.NotificationDto;
 import com.socialnetwork.notification.dto.ProfileDto;

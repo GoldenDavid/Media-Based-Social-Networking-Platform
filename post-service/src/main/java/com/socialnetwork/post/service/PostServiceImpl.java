@@ -10,6 +10,8 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.socialnetwork.common.event.NotificationEvent;
+import com.socialnetwork.common.event.NotificationType;
 import com.socialnetwork.post.config.MessageQueueConfig;
 import com.socialnetwork.post.dto.CommentDto;
 import com.socialnetwork.post.dto.CreatePostRequest;
@@ -53,6 +55,27 @@ public class PostServiceImpl implements PostService {
     log.info("Created post with id: {} by profileId: {}", post.getId(), profile.getId());
 
     rabbitTemplate.convertAndSend(MessageQueueConfig.AFTER_CREATE_POST_QUEUE, post.getId());
+
+    // Fan-out a NEW_POST notification to every follower of the post author.
+    // Failures are logged, not thrown, so a misbehaving follower fetch does not
+    // roll back the post creation.
+    try {
+      List<Integer> followerIds = profileService.getFollowerIds(profile.getId());
+      for (Integer followerId : followerIds) {
+        NotificationEvent event = NotificationEvent.builder()
+            .type(NotificationType.NEW_POST)
+            .fromProfileId(profile.getId())
+            .toProfileId(followerId)
+            .postId(post.getId())
+            .build();
+        rabbitTemplate.convertAndSend(MessageQueueConfig.NOTIFICATION_EVENT_QUEUE, event);
+      }
+      log.info("Fanned out NEW_POST notification to {} follower(s) of profileId={}",
+          followerIds.size(), profile.getId());
+    } catch (Exception ex) {
+      log.warn("Failed to fan out NEW_POST notifications for postId={}: {}",
+          post.getId(), ex.getMessage());
+    }
 
     return toPostDto(post);
   }

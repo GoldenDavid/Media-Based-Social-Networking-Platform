@@ -32,7 +32,7 @@ _No custom exchanges yet. If you add one, document it here._
 | Queue | Durable | Auto-delete | Producer | Consumer | Payload | Notes |
 |---|---|---|---|---|---|---|
 | `after-create-post-queue` | yes | no | `post-service` (`PostServiceImpl.createPost`) | `feed-service` (`PushFeedConsumer`) | `int postId` (gRPC-style integer body) | Triggers feed fan-out to followers |
-| `notification-event-queue` | yes | no | _(still missing — see Migration notes below)_ | `notification-service` (`NotificationEventConsumer`) | `NotificationEvent` (JSON or serialized) | Configured in `notification-service/.../MessageQueueConfig.java`; **no producer in this worktree** |
+| `notification-event-queue` | yes | no | `post-service` (`PostServiceImpl.createPost`) | `notification-service` (`NotificationEventConsumer`) | `NotificationEvent` (JDK-serialized; class lives in `com.socialnetwork.common.event`) | Per-follower fan-out on every new post (Phase 1.5) |
 | `notification-event-queue.dlq` | yes | no | _(auto — RabbitMQ DLX)_ | _(none — manual drain only)_ | Same body as the main queue | Dead-letter queue for `notification-event-queue` (Phase 1) |
 
 ---
@@ -41,6 +41,7 @@ _No custom exchanges yet. If you add one, document it here._
 
 ### post-service
 - `MessageQueueConfig.AFTER_CREATE_POST_QUEUE` → publishes post ID after `createPost()` commits.
+- `MessageQueueConfig.NOTIFICATION_EVENT_QUEUE` → publishes one `NotificationEvent(type=NEW_POST)` per follower of the post author after `createPost()` commits. Failures here are logged, not thrown, so a misbehaving `getFollowerIds` call does not roll back the post.
 
 ### profile-service
 - _(none)_
@@ -83,13 +84,16 @@ _No custom exchanges yet. If you add one, document it here._
 - Phase 0: topology documented (this file).
 - Phase 1: dead-letter queue `notification-event-queue.dlq` introduced in
   `notification-service` (see `MessageQueueConfig.notificationEventDlq`).
-- Phase 1 (open): `notification-event-queue` still has **no producer**.
-  `post-service` only publishes to `after-create-post-queue`; the
-  notification consumer will receive nothing until a producer is added.
-  Tracked follow-up: wire `PostServiceImpl.createPost`,
-  `PostServiceImpl.likePost`, and `PostServiceImpl.createComment` in
-  `post-service` to publish a `NotificationEvent`; wire
-  `ProfileServiceImpl.followUser` in `profile-service` similarly.
+- Phase 1.5: `notification-event-queue` now has a producer.
+  `post-service/.../PostServiceImpl.createPost` publishes one
+  `NotificationEvent(type=NEW_POST)` to every follower of the post author
+  after the post is committed. The event class was lifted from
+  `com.socialnetwork.notification.event` to
+  `com.socialnetwork.common.event` so the publisher and consumer share
+  one classloader (required for JDK serialization).
+- Phase 1.5 (open): no producers yet for
+  `PostServiceImpl.likePost` (would emit `LIKE_YOUR_POST`) or
+  `PostServiceImpl.createComment` (would emit `COMMENT_YOUR_POST`).
 - Phase 5: add `after-create-post-queue` producer to `profile-service` for follow events (so followers get feed updates when a followed user creates a post via fan-out).
 
 ---

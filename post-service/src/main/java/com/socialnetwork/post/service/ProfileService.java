@@ -1,5 +1,7 @@
 package com.socialnetwork.post.service;
 
+import java.util.List;
+
 import com.socialnetwork.post.dto.ProfileDto;
 import com.socialnetwork.common.security.UserPrincipal;
 
@@ -11,4 +13,5 @@ public interface ProfileService {
     ProfileDto getProfile(UserPrincipal userPrincipal);
     ProfileDto getProfile(int profileId);
     ProfileDto getUserProfile(int profileId);
+    List<Integer> getFollowerIds(int profileId);
 }

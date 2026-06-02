@@ -1,6 +1,6 @@
 package com.socialnetwork.notification.dto;
 
-import com.socialnetwork.notification.model.NotificationType;
+import com.socialnetwork.common.event.NotificationType;
 import lombok.Builder;
 import lombok.Data;
 import java.util.Date;

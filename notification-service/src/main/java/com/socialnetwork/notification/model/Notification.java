@@ -2,6 +2,8 @@ package com.socialnetwork.notification.model;
 
 import java.util.Date;
 
+import com.socialnetwork.common.event.NotificationType;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

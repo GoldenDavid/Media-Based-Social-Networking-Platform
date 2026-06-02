@@ -12,6 +12,29 @@ Versioning: [SemVer](https://semver.org/).
 ### Added
 - _None yet — next batch lands under 0.3.0 once Phase 5 features ship._
 
+### Fixed
+- `profile-service` `/profiles/me`, `/profiles/{id}`, `POST /profiles`,
+  `POST /profiles/profile-image` now wrap their responses in
+  `BaseResponse<Map<String, ...>>` (Phase 1.5) so the frontend
+  `unwrap()` helper returns the expected `profile` / `url` fields.
+  Aligns the profile-service contract with the post-service contract
+  (which already used `BaseResponse`).
+- `notification-event-queue` now has a real producer:
+  `post-service` publishes a `NotificationEvent(type=NEW_POST)` to every
+  follower of the post author on `createPost()`. The event class
+  `com.socialnetwork.common.event.NotificationEvent` (and its
+  `NotificationType` enum) was lifted out of `notification-service` and
+  into `socialnetwork-common` so the publisher and consumer share one
+  classloader (JDK serialization). NotificationService's
+  `MessageQueueConfig` still owns the queue and DLX declaration; the
+  post-service owns the `MessageQueueConfig.NOTIFICATION_EVENT_QUEUE`
+  constant for routing.
+
+### Changed
+- `scripts/smoke-test.sh` and `scripts/smoke-test.ps1` added (Phase 1.5):
+  bring up the full Docker stack, poll `/actuator/health` on every
+  service, verify a couple of public endpoints, then tear down. CI-ready.
+
 ---
 
 ## [0.2.0] — Phase 0 + Phase 1 (foundation + auth + config)

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.socialnetwork.common.dto.BaseResponse;
 import com.socialnetwork.common.security.UserPrincipal;
 import com.socialnetwork.profile.dto.ProfileDto;
 import com.socialnetwork.profile.dto.UpdateProfileImageRequest;
@@ -30,33 +31,33 @@ public class ProfileController {
     private final ProfileService profileService;
 
     @GetMapping("/me")
-    public ResponseEntity<?> getMyProfile(Authentication authentication) {
+    public ResponseEntity<BaseResponse<Map<String, ProfileDto>>> getMyProfile(Authentication authentication) {
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
         ProfileDto profile = profileService.getUserProfile(principal);
-        return ResponseEntity.ok(Map.of("profile", profile));
+        return ResponseEntity.ok(BaseResponse.ok(Map.of("profile", profile)));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getProfile(@PathVariable int id) {
+    public ResponseEntity<BaseResponse<Map<String, ProfileDto>>> getProfile(@PathVariable int id) {
         ProfileDto profile = profileService.getUserProfile(id);
-        return ResponseEntity.ok(Map.of("profile", profile));
+        return ResponseEntity.ok(BaseResponse.ok(Map.of("profile", profile)));
     }
 
     @PostMapping
-    public ResponseEntity<?> updateProfile(
+    public ResponseEntity<BaseResponse<Map<String, ProfileDto>>> updateProfile(
             @Valid @RequestBody UpdateProfileRequest request,
             Authentication authentication) {
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
         ProfileDto profile = profileService.updateProfile(principal, request);
-        return ResponseEntity.ok(Map.of("profile", profile));
+        return ResponseEntity.ok(BaseResponse.ok(Map.of("profile", profile)));
     }
 
     @PostMapping("/profile-image")
-    public ResponseEntity<?> updateProfileImage(
+    public ResponseEntity<BaseResponse<Map<String, String>>> updateProfileImage(
             @Valid @RequestBody UpdateProfileImageRequest request,
             Authentication authentication) {
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
         ProfileDto profile = profileService.updateProfileImage(principal, request);
-        return ResponseEntity.ok(Map.of("url", profile.getProfileImageUrl()));
+        return ResponseEntity.ok(BaseResponse.ok(Map.of("url", profile.getProfileImageUrl())));
     }
 }

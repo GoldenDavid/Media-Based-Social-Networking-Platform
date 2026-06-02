@@ -185,6 +185,77 @@ every microservice call.
 
 ---
 
+## ADR-015: Profile controller responses wrap in `BaseResponse`
+
+**Status:** Accepted (Phase 1.5)
+**Context:** `post-service` controllers (e.g. `PostController`,
+`CommentController`) wrap their responses in
+`ResponseEntity<BaseResponse<…>>`. `profile-service` did not — it
+returned `Map.of("profile", ...)` directly. Lane B's frontend
+(`api.ts`) uses a single `unwrap<T>(resp: BaseResponse<T>): T` helper
+that assumes the envelope, so the profile endpoints returned
+`undefined` for every field. ADR-002 already mandated typed DTOs;
+half-applied, the contract was inconsistent.
+**Decision:**
+- `profile-service/.../ProfileController` returns
+  `ResponseEntity<BaseResponse<Map<String, ProfileDto>>>` for
+  `/profiles/me`, `/profiles/{id}`, `POST /profiles`.
+- `POST /profiles/profile-image` returns
+  `ResponseEntity<BaseResponse<Map<String, String>>>` with the
+  inner map being `{ "url": "..." }`.
+- The inner map is deliberately untyped for now (the FE reads
+  `unwrap(wrapped).profile` / `.url`). A future Phase 5 step may
+  introduce dedicated `ProfileResponse` and `UpdateProfileImageResponse`
+  DTOs and remove the inner map; for Phase 1.5 the goal is contract
+  alignment, not DTO proliferation.
+**Consequences:**
+- The FE `unwrap` helper now works uniformly across services.
+- `FollowerController` is left as-is for this phase — it returns
+  `Map.of("data", Map.of("totalPage", ..., "followers", ...))`, which
+  is an awkward shape but the FE does not yet call those endpoints, so
+  no contract is broken. Follow-up in Phase 5.
+- The half-applied ADR-002 is now consistent across the two main
+  domain controllers (post + profile).
+
+## ADR-016: `NotificationEvent` + `NotificationType` live in `socialnetwork-common`
+
+**Status:** Accepted (Phase 1.5)
+**Context:** `notification-service` defined
+`com.socialnetwork.notification.event.NotificationEvent` (the message
+body for `notification-event-queue`). The producer side
+(`post-service`) had to publish a `NotificationEvent` but the class
+lived in a different module, so two classloaders ended up with two
+copies of the class. With Spring AMQP's default
+`SimpleMessageConverter` (JDK serialization), the consumer's
+`ClassNotFoundException` was inevitable the moment a producer was
+wired up. The class also depends on a sibling enum
+`com.socialnetwork.notification.model.NotificationType`, which would
+have the same problem.
+**Decision:**
+- Both classes move to
+  `com.socialnetwork.common.event.{NotificationEvent, NotificationType}`.
+- `socialnetwork-common` exports the package; both `post-service` and
+  `notification-service` import from there.
+- `NotificationEvent implements Serializable` with an explicit
+  `serialVersionUID = 1L` (no reliance on the compiler-generated one
+  because both publisher and consumer are built from the same JAR).
+- `notification-service` keeps ownership of the queue declaration +
+  DLX (it has the consumer); `post-service` keeps a
+  `MessageQueueConfig.NOTIFICATION_EVENT_QUEUE` constant purely as a
+  routing key (it does not declare the queue — it is not the owner).
+**Consequences:**
+- Phase 1.5 producer works: `post-service/.../PostServiceImpl.createPost`
+  publishes one `NotificationEvent(type=NEW_POST)` per follower of the
+  post author. Failures are logged, not thrown.
+- A future change to add `LIKE_YOUR_POST` / `COMMENT_YOUR_POST`
+  producers only needs to import the same shared class — no copy-paste
+  risk.
+- If we later move to `Jackson2JsonMessageConverter`, the FQCN is
+  already a stable `com.socialnetwork.common.event.NotificationEvent`,
+  so a `@RabbitHandler` JSON binding will Just Work.
+
+---
+
 ## Decision log
 
 | Date | ADR | Title | Status |
@@ -203,3 +274,7 @@ every microservice call.
 | Phase 0 | 012 | Demo data is part of the deliverable | Accepted |
 | Phase 1 | 013 | Shared `UserPrincipal` + shared `SessionConfig` (socialnetwork-common) | Accepted |
 | Phase 1 | 014 | Frontend `BASE_URL = /api` + `credentials: 'include'` | Accepted |
+| Phase 1.5 | 015 | Profile controller responses wrap in `BaseResponse` (match post-service contract) | Accepted |
+| Phase 1.5 | 016 | `NotificationEvent` + `NotificationType` live in `socialnetwork-common` (shared classloader for RabbitMQ JDK serialization) | Accepted |
+| Phase 1.5 | 015 | Profile controller responses wrap in `BaseResponse` (match post-service contract) | Accepted |
+| Phase 1.5 | 016 | `NotificationEvent` + `NotificationType` live in `socialnetwork-common` (shared classloader for RabbitMQ JDK serialization) | Accepted |
