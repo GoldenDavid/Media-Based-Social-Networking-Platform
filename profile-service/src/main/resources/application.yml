@@ -17,12 +17,19 @@ spring:
       ddl-auto: update
     show-sql: false
 
+  # Redis is used for Spring Session — must share the namespace with the
+  # monolith so cookies written by /oauth2/authorization/google can be read here.
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       database: 1
       password: ${REDIS_PASSWORD:}
+
+  session:
+    store-type: redis
+    redis:
+      namespace: engineerpro:app
 
 grpc:
   server:

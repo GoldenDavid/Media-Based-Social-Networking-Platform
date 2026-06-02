@@ -135,3 +135,40 @@
   transform: none;
   box-shadow: none;
 }
+
+.caption-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.caption-counter {
+  text-align: right;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.25rem;
+  border-radius: var(--radius-md);
+  background: rgba(20, 20, 30, 0.85);
+  color: #fff;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(10px);
+  z-index: 1000;
+  animation: fade-in 0.25s ease-out;
+}
+
+.toast-success {
+  border-left: 4px solid var(--accent-cyan, #00f2fe);
+}
+
+.toast-error {
+  border-left: 4px solid var(--accent-pink);
+}

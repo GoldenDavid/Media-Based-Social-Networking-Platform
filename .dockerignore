@@ -1,2 +1,48 @@
-*
-!build/libs/social-network-1.0.jar
+# Build outputs
+build/
+.gradle/
+out/
+bin/
+
+# IDE / OS noise
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Logs / runtime artefacts
+log/
+*.log
+
+# Local config / secrets — NEVER bake these into images
+.env
+.env.local
+docker-compose.override.yml
+mysql-init.local.sql
+
+# Docs that aren't needed for the build
+README.md
+plan.md
+architecture.md
+docs/
+demo.py
+seed.ps1
+run_with_docker.sh
+
+# Frontend install/build artefacts (built inside the frontend stage itself)
+frontend/node_modules/
+frontend/dist/
+
+# Per-service build outputs are produced inside the build stage, so don't
+# ship them from the build context. (The COPY in the build stage runs
+# `./gradlew :module:bootJar` which writes them into a layer, but we don't
+# want the host's stale build/ to leak in.)
+api-gateway/build/
+feed-service/build/
+media-service/build/
+notification-service/build/
+post-service/build/
+profile-service/build/
+proto-contracts/build/
+socialnetwork-common/build/
+src/**/build/

@@ -124,6 +124,65 @@
 - Seed needs a valid auth flow (depends on Phase 1).
 - OAuth2 user is mocked (no real Google login required for demo).
 
+## ADR-013: Phase 1 lane work — shared `UserPrincipal` + shared `SessionConfig`
+
+**Status:** Accepted (Phase 1)
+**Context:** Before Phase 1, the same `UserPrincipal` class was duplicated
+in the monolith (`src/main/java/com/socialnetwork/dto/UserPrincipal.java`)
+and in `post-service` (`post-service/.../dto/UserPrincipal.java`), with
+subtly different Jackson annotations. The monolith wrote a Redis session
+blob without `@JsonTypeInfo`; the microservices required it on read. The
+result was a `MismatchedInputException` on every authenticated call that
+reached a microservice. The same problem applied to `BaseResponse` and to
+the `SessionConfig` (`@EnableRedisHttpSession` + cookie hardening).
+**Decision:**
+- Create the `socialnetwork-common` Gradle module with a single canonical
+  `UserPrincipal` (implements `OAuth2User` + `UserDetails`), a single
+  `BaseResponse<T>` envelope, and a single `SessionConfig` that all
+  consuming services `@Import`.
+- Every service `implementation project(':socialnetwork-common')` and
+  scans `com.socialnetwork.common` alongside its own package.
+- The Redis session namespace is fixed at `engineerpro:app` for every
+  service (monolith writer + microservice reader).
+- The fully-qualified class name of `UserPrincipal` is now part of the
+  Redis session payload format; **renaming or moving the class requires
+  invalidating every active session**.
+**Consequences:**
+- Zero duplication of session / DTO / principal code.
+- A change to the principal propagates to every service in one PR.
+- New services must depend on `:socialnetwork-common`; the alternative
+  (copy-paste) is explicitly forbidden (see
+  [`socialnetwork-common/README.md`](../socialnetwork-common/README.md)).
+- Pre-Phase-1 sessions in Redis are unreadable (different FQCN) — they
+  expire on the 30-day TTL or are flushed on `docker compose down -v`.
+
+## ADR-014: Frontend `BASE_URL = /api` + `credentials: 'include'`
+
+**Status:** Accepted (Phase 1)
+**Context:** The frontend's `api.ts` was hardcoded to
+`http://localhost:8080`, did not send cookies, and ignored the `/api`
+proxy. This worked in local dev with CORS hand-waving but broke in
+Docker, broke behind Vite's proxy, and bypassed the session cookie on
+every microservice call.
+**Decision:**
+- `BASE_URL = '/api'` in `frontend/src/services/api.ts`.
+- Every `fetch` / `axios` call uses `credentials: 'include'`.
+- Vite dev server (`frontend/vite.config.ts`) and the production nginx
+  container (`frontend/nginx.conf`) both proxy `/api/**` to the gateway,
+  stripping the `/api` prefix and forwarding `Set-Cookie` (rewriting
+  `Secure` / `Domain` in dev).
+- The frontend parses the `BaseResponse<T>` envelope for endpoints that
+  return one (post, profile) and reads `data.posts` / `data.profile` etc.
+  directly for endpoints that don't (feed).
+**Consequences:**
+- The browser always sees the SPA origin (`localhost:3000` or
+  `frontend:80`), so the session cookie scope is consistent.
+- The Vite proxy and nginx config become part of the API contract —
+  changes to either file are reviewed in the same PR as the gateway.
+- A direct `fetch('http://localhost:8080/...')` from a component is now
+  a bug; lint rules will catch it (see
+  [`CONTRIBUTING.md`](../CONTRIBUTING.md)).
+
 ---
 
 ## Decision log
@@ -142,3 +201,5 @@
 | Phase 0 | 010 | N+1 gRPC via batch RPC | Accepted |
 | Phase 0 | 011 | Redis feed bounded | Accepted |
 | Phase 0 | 012 | Demo data is part of the deliverable | Accepted |
+| Phase 1 | 013 | Shared `UserPrincipal` + shared `SessionConfig` (socialnetwork-common) | Accepted |
+| Phase 1 | 014 | Frontend `BASE_URL = /api` + `credentials: 'include'` | Accepted |

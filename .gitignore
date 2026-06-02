@@ -38,8 +38,10 @@ out/
 log/
 
 ### Docs ###
-architecture.md
-plan.md
+# architecture.md and plan.md are intentionally tracked so collaborators
+# can read them on the remote. Only ignore local overrides.
+# architecture.md
+# plan.md
 
 ### Environment ###
 .env

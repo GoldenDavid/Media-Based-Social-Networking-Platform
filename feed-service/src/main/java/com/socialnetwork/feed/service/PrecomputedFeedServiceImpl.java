@@ -36,9 +36,13 @@ public class PrecomputedFeedServiceImpl implements FeedService {
         // 2. Hydrate posts via Post Service gRPC
         List<PostDto> posts = postService.getPostsByIds(postIds);
 
+        // 3. Total pages = ceil(LLEN feed:{profileId} / limit).
+        //    getFeedSize uses opsForList().size() which is LLEN.
         Long totalPost = feedRepository.getFeedSize(profileId);
         log.info("totalPost={}", totalPost);
-        int totalPage = (int) Math.ceil((double) totalPost / limit);
+        int totalPage = (totalPost == null || totalPost == 0)
+                ? 0
+                : (int) Math.ceil((double) totalPost / limit);
 
         return GetFeedResponse.builder()
                 .posts(posts).totalPage(totalPage).build();

@@ -3,8 +3,6 @@ package com.socialnetwork.feed.grpc;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -76,15 +74,29 @@ public class PostServiceGrpcClient {
     }
 
     private List<PostDto> hydrateAuthors(List<PostDto> posts) {
-        Map<Integer, ProfileDto> profilesById = posts.stream()
+        // Collect distinct author profile IDs (ADR-010: batch gRPC, no N+1).
+        List<Integer> authorIds = posts.stream()
             .map(PostDto::getCreatedBy)
             .filter(Objects::nonNull)
             .map(ProfileDto::getId)
             .distinct()
-            .collect(Collectors.toMap(
-                Function.identity(),
-                id -> profileServiceGrpcClient.getProfile(id),
-                (a, b) -> a));
+            .toList();
+
+        if (authorIds.isEmpty()) {
+            return posts;
+        }
+
+        // Single batch gRPC call to profile-service.
+        List<ProfileDto> resolved = profileServiceGrpcClient.getProfilesByIds(authorIds);
+
+        // Build id -> ProfileDto map; nulls (missing profiles) are dropped.
+        Map<Integer, ProfileDto> profilesById = new java.util.HashMap<>();
+        for (int i = 0; i < authorIds.size() && i < resolved.size(); i++) {
+            ProfileDto p = resolved.get(i);
+            if (p != null) {
+                profilesById.put(authorIds.get(i), p);
+            }
+        }
 
         posts.forEach(p -> {
             if (p.getCreatedBy() != null) {

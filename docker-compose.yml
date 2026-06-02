@@ -1,17 +1,27 @@
+x-default-jvm: &default-jvm
+  LANG: C.UTF-8
+  LC_ALL: C.UTF-8
+  JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
+
 services:
   mysql:
     image: mysql:8.0
     restart: always
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-app}
       MYSQL_USER: ${MYSQL_USER:-app}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-app}
     volumes:
-      - ./mysql-init.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql-data:/var/lib/mysql
+      - ./mysql-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
       - "127.0.0.1:3306:3306"
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-app}"]
       interval: 15s
       timeout: 5s
       retries: 10
@@ -22,6 +32,8 @@ services:
   redis:
     image: redis:7-alpine
     command: redis-server --requirepass ${REDIS_PASSWORD:-devpassword}
+    volumes:
+      - redis-data:/data
     ports:
       - "127.0.0.1:6379:6379"
     environment:
@@ -38,6 +50,8 @@ services:
   rabbitmq:
     build:
       context: ./rabbitmq-with-stomp-docker
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
     ports:
       - "127.0.0.1:5672:5672"
       - "127.0.0.1:15672:15672"
@@ -55,6 +69,8 @@ services:
 
   minio:
     image: minio/minio:RELEASE.2024-11-07T00-52-20Z
+    volumes:
+      - minio-data:/data
     ports:
       - "127.0.0.1:9000:9000"
       - "127.0.0.1:9001:9001"
@@ -76,8 +92,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        MODULE_NAME: social-network
     depends_on:
       mysql:
         condition: service_healthy
@@ -91,9 +105,12 @@ services:
     ports:
       - "127.0.0.1:8081:8080"
     environment:
-      - SPRING_PROFILES_ACTIVE=docker-compose
-      - MYSQL_DATABASE=user_db
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-devpassword}
+      <<: *default-jvm
+      SPRING_PROFILES_ACTIVE: docker-compose
+      MYSQL_DATABASE: user_db
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-devpassword}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
     networks:
       - backend-net
 
@@ -101,8 +118,6 @@ services:
     build:
       context: ./media-service
       dockerfile: Dockerfile
-      args:
-        MODULE_NAME: media-service
     depends_on:
       minio:
         condition: service_healthy
@@ -111,12 +126,13 @@ services:
       - "127.0.0.1:8083:8083"
       - "127.0.0.1:9091:9091"
     environment:
-      - MINIO_ENDPOINT=http://minio:9000
-      - MINIO_ACCESS_KEY=minioadmin
-      - MINIO_SECRET_KEY=minioadmin
-      - MINIO_BUCKET=spring-boot
-      - GRPC_PORT=9091
-      - SERVER_PORT=8083
+      <<: *default-jvm
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MINIO_BUCKET: ${MINIO_BUCKET:-spring-boot}
+      GRPC_PORT: "9091"
+      SERVER_PORT: "8083"
     networks:
       - backend-net
 
@@ -124,8 +140,6 @@ services:
     build:
       context: ./profile-service
       dockerfile: Dockerfile
-      args:
-        MODULE_NAME: profile-service
     depends_on:
       mysql:
         condition: service_healthy
@@ -138,13 +152,14 @@ services:
       - "127.0.0.1:8084:8084"
       - "127.0.0.1:9092:9092"
     environment:
-      - SPRING_PROFILES_ACTIVE=docker-compose
-      - MEDIA_SERVICE_HOST=media-service
-      - MEDIA_SERVICE_GRPC_PORT=9091
-      - GRPC_PORT=9092
-      - SERVER_PORT=8084
-      - MYSQL_DATABASE=profile_db
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-devpassword}
+      <<: *default-jvm
+      SPRING_PROFILES_ACTIVE: docker-compose
+      MEDIA_SERVICE_HOST: media-service
+      MEDIA_SERVICE_GRPC_PORT: "9091"
+      GRPC_PORT: "9092"
+      SERVER_PORT: "8084"
+      MYSQL_DATABASE: profile_db
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-devpassword}
     networks:
       - backend-net
 
@@ -152,8 +167,6 @@ services:
     build:
       context: ./post-service
       dockerfile: Dockerfile
-      args:
-        MODULE_NAME: post-service
     depends_on:
       mysql:
         condition: service_healthy
@@ -170,15 +183,16 @@ services:
       - "127.0.0.1:8085:8085"
       - "127.0.0.1:9093:9093"
     environment:
-      - SPRING_PROFILES_ACTIVE=docker-compose
-      - MEDIA_SERVICE_HOST=media-service
-      - MEDIA_SERVICE_GRPC_PORT=9091
-      - PROFILE_SERVICE_HOST=profile-service
-      - PROFILE_SERVICE_GRPC_PORT=9092
-      - GRPC_PORT=9093
-      - SERVER_PORT=8085
-      - MYSQL_DATABASE=post_db
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-devpassword}
+      <<: *default-jvm
+      SPRING_PROFILES_ACTIVE: docker-compose
+      MEDIA_SERVICE_HOST: media-service
+      MEDIA_SERVICE_GRPC_PORT: "9091"
+      PROFILE_SERVICE_HOST: profile-service
+      PROFILE_SERVICE_GRPC_PORT: "9092"
+      GRPC_PORT: "9093"
+      SERVER_PORT: "8085"
+      MYSQL_DATABASE: post_db
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-devpassword}
     networks:
       - backend-net
 
@@ -186,8 +200,6 @@ services:
     build:
       context: ./notification-service
       dockerfile: Dockerfile
-      args:
-        MODULE_NAME: notification-service
     depends_on:
       mysql:
         condition: service_healthy
@@ -201,12 +213,13 @@ services:
     ports:
       - "127.0.0.1:8086:8086"
     environment:
-      - SPRING_PROFILES_ACTIVE=docker-compose
-      - PROFILE_SERVICE_HOST=profile-service
-      - PROFILE_SERVICE_GRPC_PORT=9092
-      - SERVER_PORT=8086
-      - MYSQL_DATABASE=notification_db
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-devpassword}
+      <<: *default-jvm
+      SPRING_PROFILES_ACTIVE: docker-compose
+      PROFILE_SERVICE_HOST: profile-service
+      PROFILE_SERVICE_GRPC_PORT: "9092"
+      SERVER_PORT: "8086"
+      MYSQL_DATABASE: notification_db
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-devpassword}
     networks:
       - backend-net
 
@@ -214,8 +227,6 @@ services:
     build:
       context: ./feed-service
       dockerfile: Dockerfile
-      args:
-        MODULE_NAME: feed-service
     depends_on:
       redis:
         condition: service_healthy
@@ -229,13 +240,14 @@ services:
     ports:
       - "127.0.0.1:8087:8087"
     environment:
-      - SPRING_PROFILES_ACTIVE=docker-compose
-      - PROFILE_SERVICE_HOST=profile-service
-      - PROFILE_SERVICE_GRPC_PORT=9092
-      - POST_SERVICE_HOST=post-service
-      - POST_SERVICE_GRPC_PORT=9093
-      - SERVER_PORT=8087
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-devpassword}
+      <<: *default-jvm
+      SPRING_PROFILES_ACTIVE: docker-compose
+      PROFILE_SERVICE_HOST: profile-service
+      PROFILE_SERVICE_GRPC_PORT: "9092"
+      POST_SERVICE_HOST: post-service
+      POST_SERVICE_GRPC_PORT: "9093"
+      SERVER_PORT: "8087"
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-devpassword}
     networks:
       - backend-net
 
@@ -243,8 +255,6 @@ services:
     build:
       context: ./api-gateway
       dockerfile: Dockerfile
-      args:
-        MODULE_NAME: api-gateway
     depends_on:
       spring-app-1:
         condition: service_started
@@ -262,14 +272,16 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - SPRING_PROFILES_ACTIVE=docker-compose
-      - USER_SERVICE_HOST=spring-app-1
-      - USER_SERVICE_PORT=8080
-      - MEDIA_SERVICE_HOST=media-service
-      - PROFILE_SERVICE_HOST=profile-service
-      - POST_SERVICE_HOST=post-service
-      - FEED_SERVICE_HOST=feed-service
-      - NOTIFICATION_SERVICE_HOST=notification-service
+      <<: *default-jvm
+      SPRING_PROFILES_ACTIVE: docker-compose
+      USER_SERVICE_HOST: spring-app-1
+      # Monolith's INTERNAL container port (compose maps host 8081 → container 8080).
+      USER_SERVICE_PORT: "8080"
+      MEDIA_SERVICE_HOST: media-service
+      PROFILE_SERVICE_HOST: profile-service
+      POST_SERVICE_HOST: post-service
+      FEED_SERVICE_HOST: feed-service
+      NOTIFICATION_SERVICE_HOST: notification-service
     networks:
       - frontend-net
       - backend-net
@@ -293,9 +305,12 @@ networks:
   backend-net:
     driver: bridge
 
-x-resources: &default-resources
-  deploy:
-    resources:
-      limits:
-        memory: 512M
-        cpus: '0.5'
+volumes:
+  mysql-data:
+    driver: local
+  redis-data:
+    driver: local
+  rabbitmq-data:
+    driver: local
+  minio-data:
+    driver: local

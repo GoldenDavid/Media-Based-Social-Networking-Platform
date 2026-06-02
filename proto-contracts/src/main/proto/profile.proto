@@ -15,6 +15,11 @@ service ProfileService {
   // Resolve a single profile by its integer profile ID.
   rpc GetProfile (GetProfileRequest) returns (ProfileResponse);
 
+  // Batch-resolve multiple profiles by their integer profile IDs.
+  // The response order matches the request order (caller can rely on positional mapping).
+  // Resolves the N+1 gRPC problem (ADR-010) when hydrating feed posts.
+  rpc GetProfilesByIds (GetProfilesByIdsRequest) returns (ProfilesResponse);
+
   // Resolve a profile by the OAuth2 user UUID (string).
   // Called by Post/Comment services that only have the session UserPrincipal.
   // Creates the profile if it does not exist yet (first-login auto-provision).
@@ -33,6 +38,17 @@ service ProfileService {
 
 message GetProfileRequest {
   int32 profile_id = 1;
+}
+
+message GetProfilesByIdsRequest {
+  // Profile IDs to resolve. Order is preserved in the response (ADR-010).
+  repeated int32 profile_ids = 1;
+}
+
+message ProfilesResponse {
+  // Profiles in the same order as GetProfilesByIdsRequest.profile_ids.
+  // A position will be left empty if a requested ID is not found.
+  repeated ProfileResponse profiles = 1;
 }
 
 message GetProfileByUserIdRequest {
