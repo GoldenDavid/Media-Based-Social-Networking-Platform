@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Sidebar from './layouts/Sidebar';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
@@ -12,13 +12,28 @@ import './App.css';
 function App() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { user, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
-    return <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>;
+    return (
+      <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center' }}>
+        Loading...
+      </div>
+    );
+  }
+
+  // /login is the only public route while unauthenticated.
+  if (!user && location.pathname !== '/login') {
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
   if (!user) {
-    return <Auth />;
+    return (
+      <Routes>
+        <Route path="/login" element={<Auth />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    );
   }
 
   return (
@@ -38,6 +53,8 @@ function App() {
           <Route path="/notifications" element={<div className="page-placeholder animate-fade-in"><h2>Notifications (Coming Soon)</h2></div>} />
           <Route path="/create" element={<CreatePost />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/login" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
     </div>

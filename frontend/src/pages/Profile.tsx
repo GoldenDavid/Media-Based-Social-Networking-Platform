@@ -27,13 +27,13 @@ const Profile = () => {
     let cancelled = false;
     const fetchProfileData = async () => {
       try {
-        const profileRes = await api.getMyProfile();
+        const profileData = await api.getMyProfile();
         if (cancelled) return;
-        setProfile(profileRes.profile);
-        
-        if (profileRes.profile?.id) {
-          const postsRes = await api.getUserPosts(profileRes.profile.id);
-          if (!cancelled) setPosts(postsRes.posts || []);
+        setProfile(profileData);
+
+        if (profileData?.id) {
+          const userPosts = await api.getUserPosts(profileData.id);
+          if (!cancelled) setPosts(userPosts || []);
         }
       } catch (error) {
         console.error("Failed to fetch profile data:", error);

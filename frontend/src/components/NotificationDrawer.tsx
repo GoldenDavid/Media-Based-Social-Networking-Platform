@@ -23,10 +23,19 @@ const NotificationDrawer = ({ isOpen, onClose, username }: NotificationDrawerPro
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   useEffect(() => {
-    // Only connect if the drawer is open or if we want background notifications
-    const socket = new SockJS('/api/gs-guide-websocket');
+    // WebSocket path: matches gateway route `/gs-guide-websocket/**` exposed
+    // by `notification-service` in api-gateway/application.yml. The frontend
+    // nginx strips `/api` before forwarding to the gateway on :8080, so the
+    // client uses `/api/gs-guide-websocket`.
+    // SockJS runtime supports `withCredentials`; the bundled @types
+    // declaration omits it, so cast the options bag. This sends the session
+    // cookie on the initial SockJS info/XHR handshake.
+    const socket = new SockJS('/api/gs-guide-websocket', null, {
+      withCredentials: true,
+    } as SockJS.Options);
     const client = new Client({
       webSocketFactory: () => socket as any,
+      connectHeaders: {},
       debug: function (str) {
         console.log('STOMP: ' + str);
       },

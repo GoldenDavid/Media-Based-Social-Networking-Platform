@@ -9,7 +9,10 @@
   <body>
     <div id="root"></div>
     <script>
-      // Polyfill for sockjs-client which relies on Node's 'global' object
+      // SockJS-client (transitive dep of @stomp/stompjs) probes for a Node-style
+      // `global` identifier in some bundling scenarios. Modern browsers do not
+      // expose it, so we alias it to `window` before any module evaluates.
+      // Safe to keep — runs once at document start and is idempotent.
       window.global = window;
     </script>
     <script type="module" src="/src/main.tsx"></script>
