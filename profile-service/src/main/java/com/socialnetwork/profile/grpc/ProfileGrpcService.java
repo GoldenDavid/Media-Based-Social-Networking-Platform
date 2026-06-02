@@ -14,7 +14,10 @@ import net.devh.boot.grpc.server.service.GrpcService;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * gRPC server implementation for {@link ProfileServiceGrpc}.
@@ -58,6 +61,37 @@ public class ProfileGrpcService extends ProfileServiceGrpc.ProfileServiceImplBas
                                         .asRuntimeException()
                         )
                 );
+    }
+
+    // ── GetProfilesByIds (ADR-010: N+1 gRPC resolved via batch RPC) ──────────
+
+    @Override
+    public void getProfilesByIds(GetProfilesByIdsRequest request,
+                                 StreamObserver<ProfilesResponse> responseObserver) {
+        List<Integer> ids = request.getProfileIdsList();
+        log.debug("gRPC GetProfilesByIds: size={}", ids.size());
+        if (ids.isEmpty()) {
+            responseObserver.onNext(ProfilesResponse.newBuilder().build());
+            responseObserver.onCompleted();
+            return;
+        }
+
+        // Single DB query for all profiles, then re-order to match request.
+        Map<Integer, Profile> byId = profileRepository.findAllById(ids).stream()
+                .collect(Collectors.toMap(Profile::getId, Function.identity(), (a, b) -> a));
+
+        List<ProfileResponse> ordered = ids.stream()
+                .map(byId::get)
+                .filter(Objects::nonNull)
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+
+        responseObserver.onNext(
+                ProfilesResponse.newBuilder()
+                        .addAllProfiles(ordered)
+                        .build()
+        );
+        responseObserver.onCompleted();
     }
 
     // ── GetOrCreateProfileByUserId ────────────────────────────────────────────

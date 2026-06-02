@@ -40,6 +40,10 @@ dependencies {
     // gRPC client stubs for Profile Service and Post Service
     implementation project(':proto-contracts')
     implementation 'net.devh:grpc-client-spring-boot-starter:2.15.0.RELEASE'
+
+    // Test
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'io.grpc:grpc-testing:1.58.0'
 }
 
 tasks.named('test') {
