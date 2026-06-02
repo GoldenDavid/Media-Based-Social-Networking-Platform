@@ -10,6 +10,13 @@ Versioning: [SemVer](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- `LIKE_YOUR_POST` and `COMMENT_YOUR_POST` notification producers
+  (Phase 5.7). `PostServiceImpl.likePost` publishes a
+  `NotificationEvent` to the post's author; `CommentServiceImpl.createComment`
+  does the same. Both are suppressed when the actor is the post's
+  author. The `notification-event-queue` topology is now complete
+  for all three `NotificationType` values (`NEW_POST` was wired in
+  Phase 1.5).
 - Notification history endpoint `GET /api/notifications/me?page=&limit=`
   (Phase 5.3). Returns the persisted notification history for the
   authenticated user, most recent first. The frontend

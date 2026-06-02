@@ -42,6 +42,8 @@ _No custom exchanges yet. If you add one, document it here._
 ### post-service
 - `MessageQueueConfig.AFTER_CREATE_POST_QUEUE` → publishes post ID after `createPost()` commits.
 - `MessageQueueConfig.NOTIFICATION_EVENT_QUEUE` → publishes one `NotificationEvent(type=NEW_POST)` per follower of the post author after `createPost()` commits. Failures here are logged, not thrown, so a misbehaving `getFollowerIds` call does not roll back the post.
+- `MessageQueueConfig.NOTIFICATION_EVENT_QUEUE` → publishes a `NotificationEvent(type=LIKE_YOUR_POST)` from `PostServiceImpl.likePost` to the post's author. Suppressed when the liker is the author (no self-notify). Unlike is silent.
+- `MessageQueueConfig.NOTIFICATION_EVENT_QUEUE` → publishes a `NotificationEvent(type=COMMENT_YOUR_POST)` from `CommentServiceImpl.createComment` to the post's author. Suppressed when the commenter is the author. Delete is silent.
 
 ### profile-service
 - _(none)_
@@ -91,9 +93,10 @@ _No custom exchanges yet. If you add one, document it here._
   `com.socialnetwork.notification.event` to
   `com.socialnetwork.common.event` so the publisher and consumer share
   one classloader (required for JDK serialization).
-- Phase 1.5 (open): no producers yet for
-  `PostServiceImpl.likePost` (would emit `LIKE_YOUR_POST`) or
-  `PostServiceImpl.createComment` (would emit `COMMENT_YOUR_POST`).
+- Phase 5.7: `LIKE_YOUR_POST` and `COMMENT_YOUR_POST` producers wired
+  in `PostServiceImpl.likePost` and `CommentServiceImpl.createComment`.
+  Both are suppressed when the actor is the post's author. Queue
+  topology is now complete for all three `NotificationType` values.
 - Phase 5: add `after-create-post-queue` producer to `profile-service` for follow events (so followers get feed updates when a followed user creates a post via fan-out).
 
 ---

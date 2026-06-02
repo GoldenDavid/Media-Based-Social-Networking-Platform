@@ -112,6 +112,23 @@ public class PostServiceImpl implements PostService {
     post.getUserLikesProfileIds().add(profile.getId());
     postRepository.save(post);
     log.info("profileId={} liked post={}", profile.getId(), postId);
+
+    // Notify the post's author that someone liked their post — unless
+    // the liker IS the author (don't notify yourself).
+    if (post.getCreatedByProfileId() != profile.getId()) {
+      try {
+        NotificationEvent event = NotificationEvent.builder()
+            .type(NotificationType.LIKE_YOUR_POST)
+            .fromProfileId(profile.getId())
+            .toProfileId(post.getCreatedByProfileId())
+            .postId(post.getId())
+            .build();
+        rabbitTemplate.convertAndSend(MessageQueueConfig.NOTIFICATION_EVENT_QUEUE, event);
+      } catch (Exception ex) {
+        log.warn("Failed to publish LIKE_YOUR_POST for postId={}: {}", post.getId(), ex.getMessage());
+      }
+    }
+
     return toPostDto(post);
   }
 
