@@ -2,6 +2,7 @@ spring:
   application:
     name: post-service
 
+  # ── Persistence ──────────────────────────────────────────────────────────
   datasource:
     url: ${DB_URL:jdbc:mysql://localhost/post_db}
     username: ${DB_USER:root}
@@ -17,6 +18,7 @@ spring:
       ddl-auto: update
     show-sql: false
 
+  # ── Redis (used for Spring Session, shares the monolith's namespace) ─────
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -24,12 +26,21 @@ spring:
       database: 1
       password: ${REDIS_PASSWORD:}
 
+  session:
+    store-type: redis
+    redis:
+      namespace: engineerpro:app
+
+  # ── RabbitMQ (publishes postId to after-create-post-queue via the
+  #    DEFAULT exchange — routing key = queue name. See
+  #    com.socialnetwork.post.config.MessageQueueConfig#afterCreatePostQueue)
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USER:guest}
     password: ${RABBITMQ_PASSWORD:guest}
 
+# ── gRPC ──────────────────────────────────────────────────────────────────
 grpc:
   server:
     port: ${GRPC_PORT:9093}

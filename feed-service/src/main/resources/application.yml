@@ -1,6 +1,12 @@
 spring:
   application:
     name: feed-service
+  profiles:
+    # Default behaviour — picks up `${REDIS_HOST}`, `${RABBITMQ_HOST}`, etc.
+    # `docker-compose` profile overrides these to service names on the
+    # `backend-net` docker network. The compose file passes
+    # `SPRING_PROFILES_ACTIVE=docker-compose` to every backend container.
+    active: ${SPRING_PROFILES_ACTIVE:default}
 
   data:
     redis:
@@ -9,11 +15,30 @@ spring:
       database: 1
       password: ${REDIS_PASSWORD:}
 
+  # Optional Spring Session support (mirrors post-service / profile-service
+  # so a session cookie set by the monolith is readable here).
+  session:
+    store-type: redis
+    redis:
+      namespace: engineerpro:app
+
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USER:guest}
     password: ${RABBITMQ_PASSWORD:guest}
+    listener:
+      simple:
+        # Re-queue on transient failures; durable queue is declared by
+        # com.socialnetwork.feed.config.MessageQueueConfig#afterCreatePostQueue.
+        acknowledge-mode: auto
+        prefetch: 16
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 1s
+          max-interval: 5s
+          multiplier: 2
 
 grpc:
   client:
