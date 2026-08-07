@@ -221,12 +221,12 @@ In [PostServiceImpl.createPost](post-service/src/main/java/com/socialnetwork/pos
 
 | Step | Task |
 |------|------|
-| 5.1 | Implement Create Post page (multipart/base64 → `POST /api/posts`) |
-| 5.2 | Profile: followers/following counts via `/followers` APIs |
-| 5.3 | Notifications page or wire drawer to real persisted notifications |
-| 5.4 | Choose default feed: dynamic vs `/precomputed-feeds` (document in plan) |
-| 5.5 | Restore/add integration tests (post repository, feed service, auth inspect) |
-| 5.6 | Remove duplicate DTOs in monolith `src/` where unused (optional cleanup) |
+| 5.1 | [x] Implement Create Post page (multipart/base64 → `POST /api/posts`) |
+| 5.2 | [x] Profile: followers/following counts via `/followers` APIs |
+| 5.3 | [x] Notifications page or wire drawer to real persisted notifications |
+| 5.4 | [x] Choose default feed: dynamic vs `/precomputed-feeds` (document in plan) |
+| 5.5 | [x] Restore/add integration tests (post repository, feed service, auth inspect) |
+| 5.6 | [x] Remove duplicate DTOs in monolith `src/` where unused (optional cleanup) |
 
 ---
 
@@ -244,7 +244,7 @@ In [PostServiceImpl.createPost](post-service/src/main/java/com/socialnetwork/pos
 - [x] Phase 2 — Redis session + security + remove mock user
 - [x] Phase 3 — frontend `api.ts` + auth flow
 - [x] Phase 4 — feed hydration, pagination, upload fail-fast
-- [ ] Phase 5 — create post, notifications, tests
+- [x] Phase 5 — create post, notifications, tests
 - [ ] Phase 6 — README and shared architecture docs
 
 ---
