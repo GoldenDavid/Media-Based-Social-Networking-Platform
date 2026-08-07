@@ -4,6 +4,7 @@ import Sidebar from './layouts/Sidebar';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
 import CreatePost from './pages/CreatePost';
+import Notifications from './pages/Notifications';
 import NotificationDrawer from './components/NotificationDrawer';
 import { useAuth } from './contexts/AuthContext';
 import Auth from './pages/Auth';
@@ -50,7 +51,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/explore" element={<div className="page-placeholder animate-fade-in"><h2>Explore (Coming Soon)</h2></div>} />
-          <Route path="/notifications" element={<div className="page-placeholder animate-fade-in"><h2>Notifications (Coming Soon)</h2></div>} />
+          <Route path="/notifications" element={<Notifications />} />
           <Route path="/create" element={<CreatePost />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/login" element={<Navigate to="/" replace />} />
