@@ -56,18 +56,16 @@ spring:
             - Path=/gs-guide-websocket/**, /notifications/**
 
         # Auth (explicit route for /auth/** — covers /auth/inspect etc.)
-        # user-service in docker-compose is the monolith (spring-app-1) on its
-        # INTERNAL port 8080 (host port 8081). The compose env sets
-        # USER_SERVICE_PORT=8080, so the default below (8081) only applies to local dev.
-        - id: auth
+        # user-service is a dedicated microservice running on port 8081.
+        - id: user-service-auth
           uri: http://${USER_SERVICE_HOST:localhost}:${USER_SERVICE_PORT:8081}
           predicates:
             - Path=/auth/**
           filters:
             - StripPrefix=0
 
-        # Monolith / OAuth / user profile — all other paths owned by the monolith.
-        - id: user-service
+        # OAuth2 / user endpoints
+        - id: user-service-oauth
           uri: http://${USER_SERVICE_HOST:localhost}:${USER_SERVICE_PORT:8081}
           predicates:
             - Path=/oauth2/**, /login/**, /logout/**, /users/**

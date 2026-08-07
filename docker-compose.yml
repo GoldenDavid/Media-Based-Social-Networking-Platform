@@ -87,27 +87,25 @@ services:
     networks:
       - backend-net
 
-  # Legacy Monolith (Acts as User/Auth Service)
-  spring-app-1:
+  # User/Auth Service (extracted from monolith)
+  user-service:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: user-service/Dockerfile
     depends_on:
       mysql:
         condition: service_healthy
       redis:
         condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
     restart: always
     ports:
-      - "127.0.0.1:8081:8080"
+      - "127.0.0.1:8081:8081"
     environment:
       <<: *default-jvm
       SPRING_PROFILES_ACTIVE: docker-compose
+      SPRING_SESSION_REDIS_NAMESPACE: engineerpro:app
       MYSQL_DATABASE: user_db
+      REDIS_HOST: redis
       REDIS_PASSWORD: ${REDIS_PASSWORD:-devpassword}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
@@ -116,8 +114,8 @@ services:
 
   media-service:
     build:
-      context: ./media-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: media-service/Dockerfile
     depends_on:
       minio:
         condition: service_healthy
@@ -127,19 +125,22 @@ services:
       - "127.0.0.1:9091:9091"
     environment:
       <<: *default-jvm
+      SPRING_PROFILES_ACTIVE: docker-compose
       MINIO_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
       MINIO_BUCKET: ${MINIO_BUCKET:-spring-boot}
       GRPC_PORT: "9091"
       SERVER_PORT: "8083"
+      REDIS_HOST: redis
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-devpassword}
     networks:
       - backend-net
 
   profile-service:
     build:
-      context: ./profile-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: profile-service/Dockerfile
     depends_on:
       mysql:
         condition: service_healthy
@@ -159,14 +160,15 @@ services:
       GRPC_PORT: "9092"
       SERVER_PORT: "8084"
       MYSQL_DATABASE: profile_db
+      REDIS_HOST: redis
       REDIS_PASSWORD: ${REDIS_PASSWORD:-devpassword}
     networks:
       - backend-net
 
   post-service:
     build:
-      context: ./post-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: post-service/Dockerfile
     depends_on:
       mysql:
         condition: service_healthy
@@ -192,14 +194,15 @@ services:
       GRPC_PORT: "9093"
       SERVER_PORT: "8085"
       MYSQL_DATABASE: post_db
+      REDIS_HOST: redis
       REDIS_PASSWORD: ${REDIS_PASSWORD:-devpassword}
     networks:
       - backend-net
 
   notification-service:
     build:
-      context: ./notification-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: notification-service/Dockerfile
     depends_on:
       mysql:
         condition: service_healthy
@@ -219,14 +222,15 @@ services:
       PROFILE_SERVICE_GRPC_PORT: "9092"
       SERVER_PORT: "8086"
       MYSQL_DATABASE: notification_db
+      REDIS_HOST: redis
       REDIS_PASSWORD: ${REDIS_PASSWORD:-devpassword}
     networks:
       - backend-net
 
   feed-service:
     build:
-      context: ./feed-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: feed-service/Dockerfile
     depends_on:
       redis:
         condition: service_healthy
@@ -247,16 +251,17 @@ services:
       POST_SERVICE_HOST: post-service
       POST_SERVICE_GRPC_PORT: "9093"
       SERVER_PORT: "8087"
+      REDIS_HOST: redis
       REDIS_PASSWORD: ${REDIS_PASSWORD:-devpassword}
     networks:
       - backend-net
 
   api-gateway:
     build:
-      context: ./api-gateway
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: api-gateway/Dockerfile
     depends_on:
-      spring-app-1:
+      user-service:
         condition: service_started
       media-service:
         condition: service_started
@@ -274,9 +279,8 @@ services:
     environment:
       <<: *default-jvm
       SPRING_PROFILES_ACTIVE: docker-compose
-      USER_SERVICE_HOST: spring-app-1
-      # Monolith's INTERNAL container port (compose maps host 8081 → container 8080).
-      USER_SERVICE_PORT: "8080"
+      USER_SERVICE_HOST: user-service
+      USER_SERVICE_PORT: "8081"
       MEDIA_SERVICE_HOST: media-service
       PROFILE_SERVICE_HOST: profile-service
       POST_SERVICE_HOST: post-service

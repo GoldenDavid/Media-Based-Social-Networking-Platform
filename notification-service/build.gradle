@@ -39,6 +39,9 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
+    // STOMP broker relay to RabbitMQ needs Reactor Netty TCP client
+    implementation 'io.projectreactor.netty:reactor-netty'
+
     // gRPC client stubs for Profile Service and Post Service
     implementation project(':proto-contracts')
     implementation 'net.devh:grpc-client-spring-boot-starter:2.15.0.RELEASE'

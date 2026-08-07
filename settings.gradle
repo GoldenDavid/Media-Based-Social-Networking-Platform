@@ -9,6 +9,7 @@ include 'socialnetwork-common'
 include 'proto-contracts'
 
 // Microservices
+include 'user-service'
 include 'media-service'
 include 'profile-service'
 include 'post-service'

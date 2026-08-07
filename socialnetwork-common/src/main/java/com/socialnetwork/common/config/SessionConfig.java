@@ -13,24 +13,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
 
-/**
- * Canonical Spring Session configuration shared by all services that
- * participate in the shared Redis session.
- *
- * <p>All services that need to read sessions written by the monolith
- * <b>must</b> include this class (or a class with identical configuration)
- * on their classpath. Otherwise session deserialization will fail.
- *
- * <h2>Configuration</h2>
- * <ul>
- *   <li>Redis namespace: {@code engineerpro:app}</li>
- *   <li>Cookie name: {@code SESSION}</li>
- *   <li>Cookie SameSite: {@code Lax}</li>
- *   <li>Cookie Secure: {@code false} (override per-env for prod)</li>
- *   <li>Session value serializer: {@link GenericJackson2JsonRedisSerializer}
- *       with Spring Security Jackson modules registered.</li>
- * </ul>
- */
 @Configuration
 @EnableRedisHttpSession(redisNamespace = "engineerpro:app")
 public class SessionConfig implements BeanClassLoaderAware {
@@ -45,8 +27,6 @@ public class SessionConfig implements BeanClassLoaderAware {
         DefaultCookieSerializer serializer = new DefaultCookieSerializer();
         serializer.setCookieName(COOKIE_NAME);
         serializer.setSameSite("Lax");
-        // NOTE: Secure cookies are dropped by browsers over plain HTTP.
-        // Override per profile (e.g. set true in prod, false in dev).
         serializer.setUseSecureCookie(false);
         return serializer;
     }

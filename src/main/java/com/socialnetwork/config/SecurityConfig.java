@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -40,6 +41,8 @@ public class SecurityConfig {
         .authorizeHttpRequests(authorize -> authorize
             .anyRequest()
             .authenticated())
+        .securityContext(securityContext -> securityContext
+            .securityContextRepository(new HttpSessionSecurityContextRepository()))
         .csrf(AbstractHttpConfigurer::disable)
         .cors(cors -> {
             CorsConfiguration config = new CorsConfiguration();

@@ -1,21 +1,18 @@
 # syntax=docker/dockerfile:1.6
 
-# ── Stage 1: build the boot jar for the monolith (root module) ──────────────
 FROM eclipse-temurin:17-jdk-jammy AS build
 WORKDIR /src
 
 COPY gradlew settings.gradle build.gradle ./
 COPY gradle ./gradle
 COPY socialnetwork-common socialnetwork-common
-COPY proto-contracts proto-contracts
-COPY src src
+COPY user-service user-service
 
 RUN sed -i 's/\r$//' ./gradlew \
  && chmod +x ./gradlew \
- && ./gradlew bootJar --no-daemon -x test \
- && ls -la build/libs/
+ && ./gradlew :user-service:bootJar --no-daemon -x test \
+ && ls -la user-service/build/libs/
 
-# ── Stage 2: minimal JRE runtime ───────────────────────────────────────────
 FROM eclipse-temurin:17-jre-jammy
 
 RUN apt-get update \
@@ -29,14 +26,14 @@ ENV LANG=C.UTF-8 \
 RUN groupadd --system app && useradd --system --gid app --home /app app
 
 WORKDIR /app
-COPY --from=build /src/build/libs/*-1.0.jar /app/app.jar
+COPY --from=build /src/user-service/build/libs/*-1.0.jar /app/app.jar
 
-ENV SERVER_PORT=8080
+ENV SERVER_PORT=8081
 
-EXPOSE 8080
+EXPOSE 8081
 USER app
 
-HEALTHCHECK --interval=30s --timeout=3s --start-period=90s --retries=5 \
+HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=5 \
   CMD curl -fsS http://localhost:${SERVER_PORT}/actuator/health || exit 1
 
 ENTRYPOINT ["/usr/bin/tini", "--", "java", "-jar", "/app/app.jar"]

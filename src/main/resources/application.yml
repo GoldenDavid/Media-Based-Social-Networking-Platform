@@ -16,10 +16,14 @@ logging:
                 web:
                     filter:
                         CommonsRequestLoggingFilter: DEBUG
+                session: DEBUG
+                boot:
+                    autoconfigure:
+                        session: TRACE
 spring:
     data:
         redis:
-            database: 1
+            database: 0
             host: localhost
             port: 6379
             password: ${REDIS_PASSWORD:}
@@ -83,6 +87,8 @@ spring.config.activate.on-profile: local
 ---
 spring.config.activate.on-profile: docker-compose
 spring:
+    session:
+        store-type: none
     datasource:
         url: 'jdbc:mysql://mysql/${MYSQL_DATABASE:app}'
         username: app
