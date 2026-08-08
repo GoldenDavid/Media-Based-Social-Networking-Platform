@@ -80,6 +80,16 @@ public class AuthController {
       return ResponseEntity.ok("User registered successfully");
   }
 
+  @PostMapping("/logout")
+  public ResponseEntity<?> logout(HttpServletRequest request) {
+      HttpSession session = request.getSession(false);
+      if (session != null) {
+          session.invalidate();
+      }
+      SecurityContextHolder.clearContext();
+      return ResponseEntity.ok("Logged out successfully");
+  }
+
   @GetMapping("/inspect")
   public ResponseEntity<AuthResponse> inspect(Authentication authentication) {
     if (authentication == null || !authentication.isAuthenticated()) {
