@@ -3,6 +3,8 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Sidebar from './layouts/Sidebar';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
+import UserProfile from './pages/UserProfile';
+import Explore from './pages/Explore';
 import CreatePost from './pages/CreatePost';
 import Notifications from './pages/Notifications';
 import NotificationDrawer from './components/NotificationDrawer';
@@ -50,10 +52,11 @@ function App() {
       <main className="main-content">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/explore" element={<div className="page-placeholder animate-fade-in"><h2>Explore (Coming Soon)</h2></div>} />
+          <Route path="/explore" element={<Explore />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/create" element={<CreatePost />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/:id" element={<UserProfile />} />
           <Route path="/login" element={<Navigate to="/" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -11,20 +11,14 @@ interface SidebarProps {
 
 const Sidebar = ({ onOpenNotifications }: SidebarProps) => {
   const { theme, toggleTheme } = useTheme();
-  const { user, refresh } = useAuth();
+  const { user, logout } = useAuth();
   const googleLoginUrl = api.getGoogleLoginUrl();
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { Accept: 'application/json' },
-      });
+      await logout();
     } catch (err) {
-      console.error('Logout request failed:', err);
-    } finally {
-      await refresh();
+      console.error('Logout failed:', err);
     }
   };
 

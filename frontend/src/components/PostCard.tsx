@@ -1,5 +1,6 @@
 import { memo, useState } from 'react';
-import { Heart, MessageCircle, Share2, MoreHorizontal, Bookmark, X, Send } from 'lucide-react';
+import { Heart, MessageCircle, Share2, MoreHorizontal, Bookmark, X, Send, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { api, type PostDto, type UserPrincipal } from '../services/api';
 import './PostCard.css';
 
@@ -7,17 +8,20 @@ interface PostCardProps {
   post: PostDto;
   currentUser: UserPrincipal | null;
   onPostUpdated?: (updatedPost: PostDto) => void;
+  onPostDeleted?: (postId: number) => void;
 }
 
-const PostCard = memo(({ post: initialPost, currentUser, onPostUpdated }: PostCardProps) => {
+const PostCard = memo(({ post: initialPost, currentUser, onPostUpdated, onPostDeleted }: PostCardProps) => {
   const [post, setPost] = useState<PostDto>(initialPost);
   const [isZoomed, setIsZoomed] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [isLiking, setIsLiking] = useState(false);
   const [isCommenting, setIsCommenting] = useState(false);
+  const navigate = useNavigate();
 
   const hasLiked = currentUser ? post.userLikes?.some(u => u.username === currentUser.username) : false;
+  const isPostOwner = currentUser && post.createdBy?.username === currentUser.username;
 
   const handleLikeToggle = async () => {
     if (!currentUser || isLiking) return;
@@ -52,6 +56,37 @@ const PostCard = memo(({ post: initialPost, currentUser, onPostUpdated }: PostCa
     }
   };
 
+  const handleDeletePost = async () => {
+    if (!window.confirm("Are you sure you want to delete this post?")) return;
+    try {
+      await api.deletePost(post.id);
+      if (onPostDeleted) onPostDeleted(post.id);
+    } catch (error) {
+      console.error('Failed to delete post', error);
+      alert('Failed to delete post');
+    }
+  };
+
+  const handleDeleteComment = async (commentId: number) => {
+    if (!window.confirm("Are you sure you want to delete this comment?")) return;
+    try {
+      await api.deleteComment(commentId);
+      // Remove comment locally
+      const updatedPost = { ...post, comments: post.comments.filter(c => c.id !== commentId) };
+      setPost(updatedPost);
+      if (onPostUpdated) onPostUpdated(updatedPost);
+    } catch (error) {
+      console.error('Failed to delete comment', error);
+      alert('Failed to delete comment');
+    }
+  };
+
+  const navigateToProfile = (userId?: number) => {
+    if (userId) {
+      navigate(`/profile/${userId}`);
+    }
+  };
+
   const username = post.createdBy?.username || 'Unknown';
   const avatarUrl = post.createdBy?.profileImageUrl || 'https://i.pravatar.cc/150';
   const timeAgo = new Date(post.createdAt).toLocaleDateString();
@@ -60,7 +95,7 @@ const PostCard = memo(({ post: initialPost, currentUser, onPostUpdated }: PostCa
     <>
       <article className="post-card glass-panel animate-fade-in">
         <div className="post-header">
-          <div className="post-user-info">
+          <div className="post-user-info" onClick={() => navigateToProfile(post.createdBy?.id)} style={{ cursor: 'pointer' }}>
             <div className="avatar-ring">
               <img src={avatarUrl} alt={username} className="avatar-img" />
             </div>
@@ -69,9 +104,16 @@ const PostCard = memo(({ post: initialPost, currentUser, onPostUpdated }: PostCa
               <span className="time-ago">{timeAgo}</span>
             </div>
           </div>
-          <button className="btn-icon">
-            <MoreHorizontal size={20} />
-          </button>
+          <div className="action-group">
+            {isPostOwner && (
+              <button className="btn-icon" onClick={handleDeletePost} title="Delete Post">
+                <Trash2 size={20} className="text-danger" />
+              </button>
+            )}
+            <button className="btn-icon">
+              <MoreHorizontal size={20} />
+            </button>
+          </div>
         </div>
         
         <div className="post-image-container" onClick={() => setIsZoomed(true)}>
@@ -104,7 +146,7 @@ const PostCard = memo(({ post: initialPost, currentUser, onPostUpdated }: PostCa
             <span className="text-gradient font-bold">{post.userLikes?.length || 0} likes</span>
           </div>
           <div className="caption-container">
-            <span className="username font-bold">{username}</span>
+            <span className="username font-bold" onClick={() => navigateToProfile(post.createdBy?.id)} style={{ cursor: 'pointer' }}>{username}</span>
             <span className="caption">{post.caption}</span>
           </div>
           
@@ -118,9 +160,16 @@ const PostCard = memo(({ post: initialPost, currentUser, onPostUpdated }: PostCa
             <div className="comments-section animate-fade-in">
               <div className="comments-list">
                 {post.comments?.map(c => (
-                  <div key={c.id} className="comment-item">
-                    <span className="username font-bold">{c.createdBy?.username || 'Unknown'}</span>
-                    <span className="comment-text">{c.comment}</span>
+                  <div key={c.id} className="comment-item" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                    <div>
+                      <span className="username font-bold" onClick={() => navigateToProfile(c.createdBy?.id)} style={{ cursor: 'pointer' }}>{c.createdBy?.username || 'Unknown'}</span>
+                      <span className="comment-text" style={{ marginLeft: '8px' }}>{c.comment}</span>
+                    </div>
+                    {currentUser && c.createdBy?.username === currentUser.username && (
+                      <button className="btn-icon" onClick={() => handleDeleteComment(c.id)} title="Delete Comment" style={{ padding: '0 4px' }}>
+                        <X size={14} className="text-danger" />
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>

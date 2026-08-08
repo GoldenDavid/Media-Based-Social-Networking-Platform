@@ -158,6 +158,46 @@ export const api = {
     return profile;
   },
 
+  getUserProfile: async (userId: number): Promise<ProfileDto> => {
+    const wrapped = await apiFetch<BaseResponse<{ profile: ProfileDto }>>(`/profiles/${userId}`);
+    const profile = unwrap(wrapped).profile;
+    resolveProfileImages(profile);
+    return profile;
+  },
+
+  searchUsers: async (query: string): Promise<ProfileDto[]> => {
+    const wrapped = await apiFetch<BaseResponse<{ profiles: ProfileDto[] }>>(`/profiles/search?query=${encodeURIComponent(query)}`);
+    const profiles = unwrap(wrapped).profiles || [];
+    profiles.forEach(resolveProfileImages);
+    return profiles;
+  },
+
+  updateProfile: async (displayName: string, username: string, bio: string): Promise<ProfileDto> => {
+    const wrapped = await apiFetch<BaseResponse<{ profile: ProfileDto }>>('/profiles', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ displayName, username, bio }),
+    });
+    if (!wrapped.success) throw new Error(wrapped.message);
+    const profile = unwrap(wrapped).profile;
+    resolveProfileImages(profile);
+    return profile;
+  },
+
+  updateProfileImage: async (base64ImageString: string): Promise<string> => {
+    const wrapped = await apiFetch<BaseResponse<{ url: string }>>('/profiles/profile-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ base64ImageString }),
+    });
+    if (!wrapped.success) throw new Error(wrapped.message);
+    let url = unwrap(wrapped).url;
+    if (url && !url.startsWith('http')) {
+      url = `${MEDIA_BASE_URL}/${url}`;
+    }
+    return url;
+  },
+
   getUserPosts: async (userId: number): Promise<PostDto[]> => {
     const wrapped = await apiFetch<BaseResponse<{ posts: PostDto[] }>>(`/posts/user/${userId}`);
     const posts = unwrap(wrapped).posts ?? [];
@@ -179,6 +219,16 @@ export const api = {
       throw new Error(`Login failed: ${res.status}`);
     }
     return res.json() as Promise<UserPrincipal>;
+  },
+
+  logout: async (): Promise<void> => {
+    const res = await fetch(`${API_BASE_URL}/auth/logout`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+    if (!res.ok) {
+      throw new Error(`Logout failed: ${res.status}`);
+    }
   },
 
   register: async (name: string, username: string, password: string): Promise<void> => {
@@ -211,6 +261,15 @@ export const api = {
     return resolvePostImages(unwrap(wrapped).post);
   },
 
+  deletePost: async (postId: number): Promise<void> => {
+    const wrapped = await apiFetch<BaseResponse<any>>(`/posts/${postId}`, {
+      method: 'DELETE',
+    });
+    if (wrapped.success === false) {
+      throw new Error(wrapped.message || 'Failed to delete post');
+    }
+  },
+
   likePost: async (postId: number): Promise<PostDto> => {
     const wrapped = await apiFetch<BaseResponse<{ post: PostDto }>>(`/posts/like/${postId}`, {
       method: 'POST',
@@ -241,6 +300,15 @@ export const api = {
       throw new Error(wrapped.message || 'Failed to add comment');
     }
     return resolvePostImages(unwrap(wrapped).post);
+  },
+
+  deleteComment: async (commentId: number): Promise<void> => {
+    const wrapped = await apiFetch<BaseResponse<any>>(`/comments/${commentId}`, {
+      method: 'DELETE',
+    });
+    if (wrapped.success === false) {
+      throw new Error(wrapped.message || 'Failed to delete comment');
+    }
   },
 
   // ── Follow graph ──────────────────────────────────────────────────────────
