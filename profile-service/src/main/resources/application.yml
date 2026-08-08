@@ -23,7 +23,7 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
-      database: 1
+      database: 0
       password: ${REDIS_PASSWORD:}
 
   session:
@@ -55,7 +55,10 @@ management:
 
 logging:
   level:
-    com.socialnetwork: DEBUG
+    root: INFO
+    com.socialnetwork.profile: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.session: DEBUG
     io.grpc: INFO
 
 ---

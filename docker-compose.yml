@@ -126,6 +126,7 @@ services:
     environment:
       <<: *default-jvm
       SPRING_PROFILES_ACTIVE: docker-compose
+      SPRING_SESSION_REDIS_NAMESPACE: engineerpro:app
       MINIO_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
@@ -155,6 +156,7 @@ services:
     environment:
       <<: *default-jvm
       SPRING_PROFILES_ACTIVE: docker-compose
+      SPRING_SESSION_REDIS_NAMESPACE: engineerpro:app
       MEDIA_SERVICE_HOST: media-service
       MEDIA_SERVICE_GRPC_PORT: "9091"
       GRPC_PORT: "9092"
@@ -187,6 +189,7 @@ services:
     environment:
       <<: *default-jvm
       SPRING_PROFILES_ACTIVE: docker-compose
+      SPRING_SESSION_REDIS_NAMESPACE: engineerpro:app
       MEDIA_SERVICE_HOST: media-service
       MEDIA_SERVICE_GRPC_PORT: "9091"
       PROFILE_SERVICE_HOST: profile-service
@@ -218,6 +221,7 @@ services:
     environment:
       <<: *default-jvm
       SPRING_PROFILES_ACTIVE: docker-compose
+      SPRING_SESSION_REDIS_NAMESPACE: engineerpro:app
       PROFILE_SERVICE_HOST: profile-service
       PROFILE_SERVICE_GRPC_PORT: "9092"
       SERVER_PORT: "8086"
@@ -246,6 +250,7 @@ services:
     environment:
       <<: *default-jvm
       SPRING_PROFILES_ACTIVE: docker-compose
+      SPRING_SESSION_REDIS_NAMESPACE: engineerpro:app
       PROFILE_SERVICE_HOST: profile-service
       PROFILE_SERVICE_GRPC_PORT: "9092"
       POST_SERVICE_HOST: post-service

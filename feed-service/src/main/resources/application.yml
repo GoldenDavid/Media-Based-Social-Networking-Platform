@@ -12,7 +12,7 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
-      database: 1
+      database: 0
       password: ${REDIS_PASSWORD:}
 
   # Optional Spring Session support (mirrors post-service / profile-service
