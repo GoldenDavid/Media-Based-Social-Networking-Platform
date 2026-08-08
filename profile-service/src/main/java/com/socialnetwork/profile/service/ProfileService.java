@@ -63,6 +63,16 @@ public class ProfileService {
         return toDto(profile);
     }
 
+    public java.util.List<ProfileDto> searchProfiles(String query) {
+        if (query == null || query.trim().isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        return profileRepository.findTop20ByUsernameContainingIgnoreCaseOrDisplayNameContainingIgnoreCase(query, query)
+                .stream()
+                .map(this::toDto)
+                .toList();
+    }
+
     // ── Internal helpers ──────────────────────────────────────────────────────
 
     /**

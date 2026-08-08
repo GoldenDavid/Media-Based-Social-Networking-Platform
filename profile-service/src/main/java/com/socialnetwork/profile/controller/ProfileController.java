@@ -1,6 +1,7 @@
 package com.socialnetwork.profile.controller;
 
 import java.util.Map;
+import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.socialnetwork.common.dto.BaseResponse;
@@ -41,6 +43,12 @@ public class ProfileController {
     public ResponseEntity<BaseResponse<Map<String, ProfileDto>>> getProfile(@PathVariable int id) {
         ProfileDto profile = profileService.getUserProfile(id);
         return ResponseEntity.ok(BaseResponse.ok(Map.of("profile", profile)));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<BaseResponse<Map<String, List<ProfileDto>>>> searchProfiles(@RequestParam String query) {
+        List<ProfileDto> profiles = profileService.searchProfiles(query);
+        return ResponseEntity.ok(BaseResponse.ok(Map.of("profiles", profiles)));
     }
 
     @PostMapping

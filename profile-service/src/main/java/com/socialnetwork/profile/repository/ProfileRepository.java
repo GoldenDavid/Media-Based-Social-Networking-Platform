@@ -8,4 +8,6 @@ import org.springframework.stereotype.Repository;
 public interface ProfileRepository extends JpaRepository<Profile, Integer> {
 
     Profile findOneByUserId(String userId);
+
+    java.util.List<Profile> findTop20ByUsernameContainingIgnoreCaseOrDisplayNameContainingIgnoreCase(String username, String displayName);
 }
