@@ -5,6 +5,8 @@ import java.util.Date;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.socialnetwork.common.event.NotificationEvent;
 import com.socialnetwork.common.event.NotificationType;
@@ -50,22 +52,25 @@ public class CommentServiceImpl implements CommentService {
 
     log.info("profileId={} commented on post={}", profile.getId(), post.getId());
 
-    // Notify the post's author that someone commented on their post —
-    // unless the commenter IS the author (don't notify yourself).
-    if (post.getCreatedByProfileId() != profile.getId()) {
-      try {
-        NotificationEvent event = NotificationEvent.builder()
-            .type(NotificationType.COMMENT_YOUR_POST)
-            .fromProfileId(profile.getId())
-            .toProfileId(post.getCreatedByProfileId())
-            .postId(post.getId())
-            .build();
-        rabbitTemplate.convertAndSend(MessageQueueConfig.NOTIFICATION_EVENT_QUEUE, event);
-      } catch (Exception ex) {
-        log.warn("Failed to publish COMMENT_YOUR_POST for postId={}: {}",
-            post.getId(), ex.getMessage());
+    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+      @Override
+      public void afterCommit() {
+        if (post.getCreatedByProfileId() != profile.getId()) {
+          try {
+            NotificationEvent event = NotificationEvent.builder()
+                .type(NotificationType.COMMENT_YOUR_POST)
+                .fromProfileId(profile.getId())
+                .toProfileId(post.getCreatedByProfileId())
+                .postId(post.getId())
+                .build();
+            rabbitTemplate.convertAndSend(MessageQueueConfig.NOTIFICATION_EVENT_QUEUE, event);
+          } catch (Exception ex) {
+            log.warn("Failed to publish COMMENT_YOUR_POST for postId={}: {}",
+                post.getId(), ex.getMessage());
+          }
+        }
       }
-    }
+    });
 
     // Return a minimal PostDto (full hydration is handled by PostServiceImpl.toPostDto)
     return MapperUtils.toDto(post, profileService.getUserProfile(post.getCreatedByProfileId()),
