@@ -284,6 +284,7 @@ services:
     environment:
       <<: *default-jvm
       SPRING_PROFILES_ACTIVE: docker-compose
+      MINIO_HOST: minio
       USER_SERVICE_HOST: user-service
       USER_SERVICE_PORT: "8081"
       MEDIA_SERVICE_HOST: media-service

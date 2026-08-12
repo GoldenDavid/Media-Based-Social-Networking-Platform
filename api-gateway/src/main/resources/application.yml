@@ -25,11 +25,13 @@ spring:
             allowedHeaders: "*"
             allowCredentials: true
       routes:
-        # Media Service
+        # Media Service - Proxy directly to Minio
         - id: media-service
-          uri: http://${MEDIA_SERVICE_HOST:localhost}:8083
+          uri: http://${MINIO_HOST:localhost}:9000
           predicates:
             - Path=/media/**
+          filters:
+            - RewritePath=/media/(?<segment>.*), /${MINIO_BUCKET:spring-boot}/$\{segment}
 
         # Profile Service
         - id: profile-service
