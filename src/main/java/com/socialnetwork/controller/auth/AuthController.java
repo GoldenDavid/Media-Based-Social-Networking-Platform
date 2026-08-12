@@ -90,15 +90,5 @@ public class AuthController {
     return ResponseEntity.ok().body(new AuthResponse(userPrincipal.getId(), userPrincipal.getUsername(), userPrincipal.getName()));
   }
 
-  @GetMapping("/check-has-admin-role")
-  @PreAuthorize("hasRole('ADMIN')")
-  public Object sayHello(Authentication authentication) {
-    return ResponseEntity.ok().body("has admin role");
-  }
 
-  @GetMapping("/check-has-user-role")
-  @PreAuthorize("hasAuthority('ROLE_USER')")
-  public Object getPrincipal(Authentication authentication) {
-    return ResponseEntity.ok().body("has user role");
-  }
 }

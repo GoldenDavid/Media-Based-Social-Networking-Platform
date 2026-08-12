@@ -41,12 +41,6 @@ public class PostController {
     return ResponseEntity.ok().body(BaseResponse.ok(CreatePostResponse.builder().post(post).build()));
   }
 
-  @GetMapping("/{id}")
-  public ResponseEntity<BaseResponse<GetPostResponse>> getPost(@PathVariable int id) {
-    PostDto post = postService.getPost(id);
-    return ResponseEntity.ok().body(BaseResponse.ok(GetPostResponse.builder().post(post).build()));
-  }
-
   @DeleteMapping("/{id}")
   public ResponseEntity<DeletePostResponse> deletePost(@PathVariable int id, Authentication authentication) {
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
