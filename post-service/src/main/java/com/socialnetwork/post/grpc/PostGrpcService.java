@@ -112,14 +112,17 @@ public class PostGrpcService extends PostServiceGrpc.PostServiceImplBase {
     }
 
     private PostResponse toPostResponse(Post post) {
-        return PostResponse.newBuilder()
+        PostResponse.Builder builder = PostResponse.newBuilder()
                 .setId(post.getId())
                 .setImageUrl(post.getImageUrl() != null ? post.getImageUrl() : "")
                 .setCaption(post.getCaption() != null ? post.getCaption() : "")
                 .setCreatedByProfileId(post.getCreatedByProfileId())
                 .setCreatedAt(post.getCreatedAt() != null ? post.getCreatedAt().getTime() : 0)
                 .setLikeCount(post.getUserLikesProfileIds() != null ? post.getUserLikesProfileIds().size() : 0)
-                .setCommentCount(post.getComments() != null ? post.getComments().size() : 0)
-                .build();
+                .setCommentCount(post.getComments() != null ? post.getComments().size() : 0);
+        if (post.getUserLikesProfileIds() != null) {
+            builder.addAllUserLikesProfileIds(post.getUserLikesProfileIds());
+        }
+        return builder.build();
     }
 }

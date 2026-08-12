@@ -41,6 +41,7 @@ message PostResponse {
   int64  created_at          = 5;
   int32  like_count          = 6;
   int32  comment_count       = 7;
+  repeated int32 user_likes_profile_ids = 8;
 }
 
 message GetPostsByIdsRequest {

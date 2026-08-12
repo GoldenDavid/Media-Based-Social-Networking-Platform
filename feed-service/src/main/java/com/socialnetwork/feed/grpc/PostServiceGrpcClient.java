@@ -74,27 +74,32 @@ public class PostServiceGrpcClient {
     }
 
     private List<PostDto> hydrateAuthors(List<PostDto> posts) {
-        // Collect distinct author profile IDs (ADR-010: batch gRPC, no N+1).
-        List<Integer> authorIds = posts.stream()
-            .map(PostDto::getCreatedBy)
-            .filter(Objects::nonNull)
-            .map(ProfileDto::getId)
-            .distinct()
-            .toList();
+        java.util.Set<Integer> profileIds = new java.util.HashSet<>();
+        
+        posts.forEach(p -> {
+            if (p.getCreatedBy() != null) {
+                profileIds.add(p.getCreatedBy().getId());
+            }
+            if (p.getUserLikes() != null) {
+                p.getUserLikes().forEach(liker -> profileIds.add(liker.getId()));
+            }
+        });
 
-        if (authorIds.isEmpty()) {
+        if (profileIds.isEmpty()) {
             return posts;
         }
 
+        List<Integer> idsList = new java.util.ArrayList<>(profileIds);
+
         // Single batch gRPC call to profile-service.
-        List<ProfileDto> resolved = profileServiceGrpcClient.getProfilesByIds(authorIds);
+        List<ProfileDto> resolved = profileServiceGrpcClient.getProfilesByIds(idsList);
 
         // Build id -> ProfileDto map; nulls (missing profiles) are dropped.
         Map<Integer, ProfileDto> profilesById = new java.util.HashMap<>();
-        for (int i = 0; i < authorIds.size() && i < resolved.size(); i++) {
+        for (int i = 0; i < idsList.size() && i < resolved.size(); i++) {
             ProfileDto p = resolved.get(i);
             if (p != null) {
-                profilesById.put(authorIds.get(i), p);
+                profilesById.put(idsList.get(i), p);
             }
         }
 
@@ -105,17 +110,32 @@ public class PostServiceGrpcClient {
                     p.setCreatedBy(hydrated);
                 }
             }
+            if (p.getUserLikes() != null) {
+                java.util.Set<ProfileDto> hydratedLikes = new java.util.HashSet<>();
+                p.getUserLikes().forEach(liker -> {
+                    ProfileDto hydrated = profilesById.get(liker.getId());
+                    if (hydrated != null) {
+                        hydratedLikes.add(hydrated);
+                    }
+                });
+                p.setUserLikes(hydratedLikes);
+            }
         });
         return posts;
     }
 
     private PostDto toDto(PostResponse r) {
+        java.util.Set<ProfileDto> unhydratedLikes = r.getUserLikesProfileIdsList().stream()
+            .map(id -> ProfileDto.builder().id(id).build())
+            .collect(java.util.stream.Collectors.toSet());
+            
         return PostDto.builder()
             .id(r.getId())
             .imageUrl(r.getImageUrl())
             .caption(r.getCaption())
             .createdAt(new java.util.Date(r.getCreatedAt()))
             .createdBy(ProfileDto.builder().id(r.getCreatedByProfileId()).build())
+            .userLikes(unhydratedLikes)
             .build();
     }
 }
