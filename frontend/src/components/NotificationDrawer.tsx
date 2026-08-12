@@ -139,7 +139,7 @@ const NotificationDrawer = ({ isOpen, onClose, username }: NotificationDrawerPro
             notifications.map(notif => (
               <div key={notif.id} className="notification-item animate-fade-in">
                 <div className="avatar-ring notif-avatar-ring">
-                  <img src={notif.fromUser?.profileImageUrl || 'https://i.pravatar.cc/150'} alt={notif.fromUser?.username} className="avatar-img notif-avatar" />
+                  <img src={notif.fromUser?.profileImageUrl || '/default-avatar.svg'} alt={notif.fromUser?.username} className="avatar-img notif-avatar" />
                   <div className="icon-badge">
                     {renderIcon(notif.notificationType)}
                   </div>

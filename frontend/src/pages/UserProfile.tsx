@@ -84,7 +84,7 @@ const UserProfile = () => {
       <header className="profile-header glass-panel">
         <div className="profile-avatar-container">
           <div className="avatar-ring-large">
-            <img src={profile.profileImageUrl || 'https://i.pravatar.cc/150'} alt="Avatar" className="profile-avatar" />
+            <img src={profile.profileImageUrl || '/default-avatar.svg'} alt="Avatar" className="profile-avatar" />
           </div>
         </div>
         

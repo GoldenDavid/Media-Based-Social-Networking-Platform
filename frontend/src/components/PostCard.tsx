@@ -88,7 +88,7 @@ const PostCard = memo(({ post: initialPost, currentUser, onPostUpdated, onPostDe
   };
 
   const username = post.createdBy?.username || 'Unknown';
-  const avatarUrl = post.createdBy?.profileImageUrl || 'https://i.pravatar.cc/150';
+  const avatarUrl = post.createdBy?.profileImageUrl || '/default-avatar.svg';
   const timeAgo = new Date(post.createdAt).toLocaleDateString();
 
   return (
