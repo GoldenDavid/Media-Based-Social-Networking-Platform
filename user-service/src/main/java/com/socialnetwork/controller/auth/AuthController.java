@@ -25,6 +25,7 @@ import com.socialnetwork.dto.AuthResponse;
 import com.socialnetwork.dto.LoginRequest;
 import com.socialnetwork.dto.RegisterRequest;
 import com.socialnetwork.common.security.UserPrincipal;
+import com.socialnetwork.common.security.JwtUtils;
 import com.socialnetwork.model.User;
 import com.socialnetwork.repository.UserRepository;
 
@@ -40,21 +41,22 @@ public class AuthController {
   private final AuthenticationManager authenticationManager;
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
+  private final JwtUtils jwtUtils;
 
   @PostMapping("/login")
-  public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest loginRequest, HttpServletRequest request) {
+  public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
       Authentication authentication = authenticationManager.authenticate(
               new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
       );
       
       SecurityContextHolder.getContext().setAuthentication(authentication);
-      HttpSession session = request.getSession();
-      session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, SecurityContextHolder.getContext());
 
       UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-      log.info("User {} logged in successfully. Session ID: {}", userPrincipal.getUsername(), session.getId());
+      String jwt = jwtUtils.generateJwtToken(userPrincipal);
       
-      return ResponseEntity.ok(new AuthResponse(userPrincipal.getId(), userPrincipal.getUsername(), userPrincipal.getName()));
+      log.info("User {} logged in successfully.", userPrincipal.getUsername());
+      
+      return ResponseEntity.ok(new AuthResponse(userPrincipal.getId(), userPrincipal.getUsername(), userPrincipal.getName(), jwt));
   }
 
   @PostMapping("/register")
@@ -81,11 +83,9 @@ public class AuthController {
   }
 
   @PostMapping("/logout")
-  public ResponseEntity<?> logout(HttpServletRequest request) {
-      HttpSession session = request.getSession(false);
-      if (session != null) {
-          session.invalidate();
-      }
+  public ResponseEntity<?> logout() {
+      // With stateless JWT, we don't have a session to invalidate on the server.
+      // The client should remove the JWT token from its local storage.
       SecurityContextHolder.clearContext();
       return ResponseEntity.ok("Logged out successfully");
   }
@@ -97,7 +97,7 @@ public class AuthController {
     }
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
     log.info(String.format("authentication %s", userPrincipal.getId()));
-    return ResponseEntity.ok().body(new AuthResponse(userPrincipal.getId(), userPrincipal.getUsername(), userPrincipal.getName()));
+    return ResponseEntity.ok().body(new AuthResponse(userPrincipal.getId(), userPrincipal.getUsername(), userPrincipal.getName(), null));
   }
 
 

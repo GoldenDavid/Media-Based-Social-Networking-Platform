@@ -44,6 +44,7 @@ export interface UserPrincipal {
   id: string;
   username: string;
   name?: string;
+  token?: string;
 }
 
 export interface CreatePostResponse {
@@ -108,9 +109,14 @@ const resolvePostImages = (post: PostDto) => {
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const url = `${API_BASE_URL}${path}`;
+  const token = localStorage.getItem('jwtToken');
+  const headers = { Accept: 'application/json', ...init?.headers } as any;
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
   const res = await fetch(url, {
-    credentials: 'include',
-    headers: { Accept: 'application/json', ...init?.headers },
+    headers,
     ...init,
   });
   if (!res.ok) {
@@ -123,9 +129,13 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 export const api = {
   inspectAuth: async (): Promise<UserPrincipal | null> => {
     const url = `${API_BASE_URL}/auth/inspect`;
+    const token = localStorage.getItem('jwtToken');
+    const headers = { Accept: 'application/json' } as any;
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
     const res = await fetch(url, {
-      credentials: 'include',
-      headers: { Accept: 'application/json' },
+      headers,
     });
     if (res.status === 401) {
       return null;
@@ -213,18 +223,21 @@ export const api = {
         Accept: 'application/json',
       },
       body: JSON.stringify({ username, password }),
-      credentials: 'include',
     });
     if (!res.ok) {
       throw new Error(`Login failed: ${res.status}`);
     }
-    return res.json() as Promise<UserPrincipal>;
+    const data = await res.json() as UserPrincipal;
+    if (data.token) {
+      localStorage.setItem('jwtToken', data.token);
+    }
+    return data;
   },
 
   logout: async (): Promise<void> => {
+    localStorage.removeItem('jwtToken');
     const res = await fetch(`${API_BASE_URL}/auth/logout`, {
       method: 'POST',
-      credentials: 'include',
     });
     if (!res.ok) {
       throw new Error(`Logout failed: ${res.status}`);
@@ -239,7 +252,6 @@ export const api = {
         Accept: 'application/json',
       },
       body: JSON.stringify({ name, username, password }),
-      credentials: 'include',
     });
     if (!res.ok) {
       const errorText = await res.text().catch(() => 'Unknown error');

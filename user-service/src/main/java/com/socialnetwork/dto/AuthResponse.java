@@ -10,4 +10,5 @@ public class AuthResponse {
     private UUID id;
     private String username;
     private String name;
+    private String token;
 }
