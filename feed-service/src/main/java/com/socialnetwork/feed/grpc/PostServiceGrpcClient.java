@@ -96,10 +96,9 @@ public class PostServiceGrpcClient {
 
         // Build id -> ProfileDto map; nulls (missing profiles) are dropped.
         Map<Integer, ProfileDto> profilesById = new java.util.HashMap<>();
-        for (int i = 0; i < idsList.size() && i < resolved.size(); i++) {
-            ProfileDto p = resolved.get(i);
+        for (ProfileDto p : resolved) {
             if (p != null) {
-                profilesById.put(idsList.get(i), p);
+                profilesById.put(p.getId(), p);
             }
         }
 
