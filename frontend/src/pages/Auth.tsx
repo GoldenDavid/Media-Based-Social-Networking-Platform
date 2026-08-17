@@ -7,22 +7,32 @@ const Auth = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [authError, setAuthError] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    setAuthError('');
+    setErrorMsg('');
+    setSuccessMsg('');
     try {
       if (authMode === 'login') {
         await login(username, password);
       } else {
         await register(name, username, password);
         setAuthMode('login');
-        setAuthError('Registration successful! Please log in.');
+        setSuccessMsg('Registration successful! Please log in.');
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Authentication failed';
-      setAuthError(message);
+      let friendlyMessage = message;
+      if (message.includes('401')) {
+          friendlyMessage = 'Invalid username or password.';
+      } else if (message.includes('400')) {
+          friendlyMessage = 'Invalid input or user already exists.';
+      } else if (message.includes('Request failed')) {
+          friendlyMessage = 'Something went wrong. Please try again.';
+      }
+      setErrorMsg(friendlyMessage);
     }
   };
 
@@ -44,7 +54,19 @@ const Auth = () => {
           {authMode === 'login' ? 'Welcome Back' : 'Create Account'}
         </h3>
         
-        {authError && <p style={{ color: 'var(--accent-pink)', marginBottom: '1rem', fontSize: '0.9rem' }}>{authError}</p>}
+        {errorMsg && (
+          <div className="animate-fade-in" style={{ background: 'rgba(250, 112, 154, 0.1)', border: '1px solid var(--accent-pink)', color: 'var(--accent-pink)', padding: '0.8rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem', textAlign: 'left' }}>
+            <span>⚠️</span>
+            <span>{errorMsg}</span>
+          </div>
+        )}
+        
+        {successMsg && (
+          <div className="animate-fade-in" style={{ background: 'rgba(79, 172, 254, 0.1)', border: '1px solid var(--accent-cyan)', color: 'var(--accent-cyan)', padding: '0.8rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem', textAlign: 'left' }}>
+            <span>✅</span>
+            <span>{successMsg}</span>
+          </div>
+        )}
         
         <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {authMode === 'register' && (
