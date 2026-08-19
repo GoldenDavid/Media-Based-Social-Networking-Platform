@@ -24,7 +24,7 @@ public class MapperUtils {
                 .build();
     }
 
-    public static PostDto toDto(Post post, ProfileDto createdByProfile, List<CommentDto> comments, Set<ProfileDto> likes) {
+    public static PostDto toDto(Post post, ProfileDto createdByProfile, List<CommentDto> comments, Set<ProfileDto> likes, Set<ProfileDto> saves) {
         if (Objects.isNull(post)) {
             return null;
         }
@@ -37,6 +37,7 @@ public class MapperUtils {
                 .createdBy(createdByProfile)
                 .comments(comments)
                 .userLikes(likes)
+                .userSaves(saves)
                 .build();
     }
 }

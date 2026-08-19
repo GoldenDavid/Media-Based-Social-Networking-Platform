@@ -21,4 +21,5 @@ public class PostDto {
     private Date createdAt;
     private List<CommentDto> comments;
     private Set<ProfileDto> userLikes;
+    private Set<ProfileDto> userSaves;
 }

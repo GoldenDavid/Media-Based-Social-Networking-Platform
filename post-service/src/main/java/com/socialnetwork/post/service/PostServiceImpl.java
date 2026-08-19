@@ -158,6 +158,35 @@ public class PostServiceImpl implements PostService {
         .stream().map(this::toPostDto).collect(Collectors.toList());
   }
 
+  @Override
+  @Transactional
+  public PostDto savePost(UserPrincipal userPrincipal, int postId) {
+    ProfileDto profile = profileService.getProfile(userPrincipal);
+    Post post = getPostEntity(postId);
+    post.getUserSavedProfileIds().add(profile.getId());
+    postRepository.save(post);
+    log.info("profileId={} saved post={}", profile.getId(), postId);
+    return toPostDto(post);
+  }
+
+  @Override
+  @Transactional
+  public PostDto unsavePost(UserPrincipal userPrincipal, int postId) {
+    ProfileDto profile = profileService.getProfile(userPrincipal);
+    Post post = getPostEntity(postId);
+    post.getUserSavedProfileIds().remove(profile.getId());
+    postRepository.save(post);
+    log.info("profileId={} unsaved post={}", profile.getId(), postId);
+    return toPostDto(post);
+  }
+
+  @Override
+  public List<PostDto> getSavedPosts(UserPrincipal userPrincipal) {
+    ProfileDto profile = profileService.getProfile(userPrincipal);
+    return postRepository.findPostsSavedByUser(profile.getId())
+        .stream().map(this::toPostDto).collect(Collectors.toList());
+  }
+
   // ── Private helper ────────────────────────────────────────────────────────
 
   private PostDto toPostDto(Post post) {
@@ -177,6 +206,13 @@ public class PostServiceImpl implements PostService {
           .collect(Collectors.toSet());
     }
 
-    return MapperUtils.toDto(post, author, comments, likes);
+    Set<ProfileDto> saves = Collections.emptySet();
+    if (post.getUserSavedProfileIds() != null) {
+      saves = post.getUserSavedProfileIds().stream()
+          .map(id -> profileService.getUserProfile(id))
+          .collect(Collectors.toSet());
+    }
+
+    return MapperUtils.toDto(post, author, comments, likes, saves);
   }
 }

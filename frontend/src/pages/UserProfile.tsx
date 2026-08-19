@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Grid, X } from 'lucide-react';
+import { Grid, X, Bookmark } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { api, type ProfileDto, type PostDto } from '../services/api';
@@ -13,6 +13,8 @@ const UserProfile = () => {
   const { user, profileId, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<ProfileDto | null>(null);
   const [posts, setPosts] = useState<PostDto[]>([]);
+  const [savedPosts, setSavedPosts] = useState<PostDto[]>([]);
+  const [activeTab, setActiveTab] = useState<'POSTS' | 'SAVED'>('POSTS');
   const [followerCount, setFollowerCount] = useState<number | null>(null);
   const [followingCount, setFollowingCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -21,11 +23,13 @@ const UserProfile = () => {
   const handlePostUpdated = useCallback((updated: PostDto) => {
     setSelectedPost(updated);
     setPosts(prev => prev.map(p => p.id === updated.id ? updated : p));
+    setSavedPosts(prev => prev.map(p => p.id === updated.id ? updated : p));
   }, []);
 
   const handlePostDeleted = useCallback((postId: number) => {
     setSelectedPost(null);
     setPosts(prev => prev.filter(p => p.id !== postId));
+    setSavedPosts(prev => prev.filter(p => p.id !== postId));
   }, []);
 
   useEffect(() => {
@@ -41,6 +45,15 @@ const UserProfile = () => {
         if (profileData?.id) {
           const userPosts = await api.getUserPosts(profileData.id);
           if (!cancelled) setPosts(userPosts || []);
+
+          if (profileId === profileData.id) {
+            try {
+              const saved = await api.getSavedPosts();
+              if (!cancelled) setSavedPosts(saved || []);
+            } catch (err) {
+              console.error(err);
+            }
+          }
 
           try {
             const followers = await api.getFollowers(profileData.id, 1, 1000);
@@ -112,16 +125,27 @@ const UserProfile = () => {
       </header>
       
       <div className="profile-tabs">
-        <button className="tab active">
+        <button 
+          className={`tab ${activeTab === 'POSTS' ? 'active' : ''}`}
+          onClick={() => setActiveTab('POSTS')}
+        >
           <Grid size={18} /> POSTS
         </button>
+        {isCurrentUser && (
+          <button 
+            className={`tab ${activeTab === 'SAVED' ? 'active' : ''}`}
+            onClick={() => setActiveTab('SAVED')}
+          >
+            <Bookmark size={18} /> SAVED
+          </button>
+        )}
       </div>
       
       <div className="profile-grid">
-        {posts.length === 0 ? (
+        {(activeTab === 'POSTS' ? posts : savedPosts).length === 0 ? (
           <div className="empty-state">No posts yet.</div>
         ) : (
-          posts.map((post) => (
+          (activeTab === 'POSTS' ? posts : savedPosts).map((post) => (
             <div key={post.id} className="grid-item" onClick={() => setSelectedPost(post)} style={{ cursor: 'pointer' }}>
               <img src={post.imageUrl} alt={`Post ${post.id}`} />
               <div className="grid-item-overlay">

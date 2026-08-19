@@ -54,4 +54,9 @@ public class Post {
   @CollectionTable(name = "post_likes", joinColumns = @JoinColumn(name = "post_id"))
   @Column(name = "profile_id")
   Set<Integer> userLikesProfileIds;
+
+  @ElementCollection
+  @CollectionTable(name = "post_saves", joinColumns = @JoinColumn(name = "post_id"))
+  @Column(name = "profile_id")
+  Set<Integer> userSavedProfileIds;
 }

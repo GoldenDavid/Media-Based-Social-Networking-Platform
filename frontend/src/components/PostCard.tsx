@@ -17,10 +17,12 @@ const PostCard = memo(({ post: initialPost, currentUser, onPostUpdated, onPostDe
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [isLiking, setIsLiking] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [isCommenting, setIsCommenting] = useState(false);
   const navigate = useNavigate();
 
   const hasLiked = currentUser ? post.userLikes?.some(u => u.username === currentUser.username) : false;
+  const hasSaved = currentUser ? post.userSaves?.some(u => u.username === currentUser.username) : false;
   const isPostOwner = currentUser && post.createdBy?.username === currentUser.username;
 
   const handleLikeToggle = async () => {
@@ -36,6 +38,22 @@ const PostCard = memo(({ post: initialPost, currentUser, onPostUpdated, onPostDe
       console.error('Failed to toggle like', error);
     } finally {
       setIsLiking(false);
+    }
+  };
+
+  const handleSaveToggle = async () => {
+    if (!currentUser || isSaving) return;
+    setIsSaving(true);
+    try {
+      const updatedPost = hasSaved 
+        ? await api.unsavePost(post.id)
+        : await api.savePost(post.id);
+      setPost(updatedPost);
+      if (onPostUpdated) onPostUpdated(updatedPost);
+    } catch (error) {
+      console.error('Failed to toggle save', error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -136,8 +154,12 @@ const PostCard = memo(({ post: initialPost, currentUser, onPostUpdated, onPostDe
               <Share2 size={24} />
             </button>
           </div>
-          <button className="btn-icon action-btn">
-            <Bookmark size={24} />
+          <button 
+            className={`btn-icon action-btn save-btn ${hasSaved ? 'saved' : ''}`}
+            onClick={handleSaveToggle}
+            disabled={!currentUser || isSaving}
+          >
+            <Bookmark size={24} fill={hasSaved ? 'currentColor' : 'none'} />
           </button>
         </div>
         

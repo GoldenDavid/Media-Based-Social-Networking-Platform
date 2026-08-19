@@ -21,4 +21,10 @@ public interface PostService {
   PostDto unlikePost(UserPrincipal userPrincipal, int postId);
 
   List<PostDto> getUserPosts(int userId);
+
+  PostDto savePost(UserPrincipal userPrincipal, int postId);
+
+  PostDto unsavePost(UserPrincipal userPrincipal, int postId);
+
+  List<PostDto> getSavedPosts(UserPrincipal userPrincipal);
 }

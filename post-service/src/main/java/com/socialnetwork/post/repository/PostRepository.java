@@ -20,4 +20,7 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
 
   @Query(value = "SELECT * FROM post WHERE created_by_id IN :profileIds ORDER BY created_at DESC LIMIT :limit OFFSET :offset", nativeQuery = true)
   List<Post> findByCreatedBy(@Param("profileIds") List<Integer> profileIds, @Param("limit") int limit, @Param("offset") int offset);
+
+  @Query("SELECT p FROM Post p JOIN p.userSavedProfileIds s WHERE s = :profileId ORDER BY p.createdAt DESC")
+  List<Post> findPostsSavedByUser(@Param("profileId") int profileId);
 }

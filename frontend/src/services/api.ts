@@ -26,6 +26,7 @@ export interface PostDto {
   createdAt: string;
   comments: CommentDto[];
   userLikes: ProfileDto[];
+  userSaves?: ProfileDto[];
 }
 
 export interface FeedResponse {
@@ -103,6 +104,7 @@ const resolvePostImages = (post: PostDto) => {
   }
   resolveProfileImages(post.createdBy);
   post.userLikes?.forEach(resolveProfileImages);
+  post.userSaves?.forEach(resolveProfileImages);
   post.comments?.forEach(c => resolveProfileImages(c.createdBy));
   return post;
 };
@@ -300,6 +302,33 @@ export const api = {
       throw new Error(wrapped.message || 'Failed to unlike post');
     }
     return resolvePostImages(unwrap(wrapped).post);
+  },
+
+  savePost: async (postId: number): Promise<PostDto> => {
+    const wrapped = await apiFetch<BaseResponse<{ post: PostDto }>>(`/posts/save/${postId}`, {
+      method: 'POST',
+    });
+    if (!wrapped.success) {
+      throw new Error(wrapped.message || 'Failed to save post');
+    }
+    return resolvePostImages(unwrap(wrapped).post);
+  },
+
+  unsavePost: async (postId: number): Promise<PostDto> => {
+    const wrapped = await apiFetch<BaseResponse<{ post: PostDto }>>(`/posts/save/${postId}`, {
+      method: 'DELETE',
+    });
+    if (!wrapped.success) {
+      throw new Error(wrapped.message || 'Failed to unsave post');
+    }
+    return resolvePostImages(unwrap(wrapped).post);
+  },
+
+  getSavedPosts: async (): Promise<PostDto[]> => {
+    const wrapped = await apiFetch<BaseResponse<{ posts: PostDto[] }>>('/posts/saved');
+    const posts = unwrap(wrapped).posts ?? [];
+    posts.forEach(resolvePostImages);
+    return posts;
   },
 
   commentOnPost: async (postId: number, comment: string): Promise<PostDto> => {

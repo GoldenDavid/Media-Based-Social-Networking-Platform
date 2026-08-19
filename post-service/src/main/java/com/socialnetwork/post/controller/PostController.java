@@ -67,4 +67,25 @@ public class PostController {
     List<PostDto> posts = postService.getUserPosts(id);
     return ResponseEntity.ok().body(BaseResponse.ok(GetUserPostResponse.builder().posts(posts).build()));
   }
+
+  @PostMapping("/save/{id}")
+  public ResponseEntity<BaseResponse<GetPostResponse>> savePost(@PathVariable int id, Authentication authentication) {
+    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+    PostDto post = postService.savePost(userPrincipal, id);
+    return ResponseEntity.ok().body(BaseResponse.ok(GetPostResponse.builder().post(post).build()));
+  }
+
+  @DeleteMapping("/save/{id}")
+  public ResponseEntity<BaseResponse<GetPostResponse>> unsavePost(@PathVariable int id, Authentication authentication) {
+    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+    PostDto post = postService.unsavePost(userPrincipal, id);
+    return ResponseEntity.ok().body(BaseResponse.ok(GetPostResponse.builder().post(post).build()));
+  }
+
+  @GetMapping("/saved")
+  public ResponseEntity<BaseResponse<GetUserPostResponse>> getSavedPosts(Authentication authentication) {
+    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+    List<PostDto> posts = postService.getSavedPosts(userPrincipal);
+    return ResponseEntity.ok().body(BaseResponse.ok(GetUserPostResponse.builder().posts(posts).build()));
+  }
 }
