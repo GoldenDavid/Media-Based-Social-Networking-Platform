@@ -22,7 +22,8 @@ import com.socialnetwork.post.dto.ProfileDto;
 import com.socialnetwork.common.security.UserPrincipal;
 import com.socialnetwork.post.exception.NoPermissionException;
 import com.socialnetwork.post.exception.PostNotFoundException;
-import com.socialnetwork.post.model.Post;
+import com.socialnetwork.post.model.PostDocument;
+import com.socialnetwork.post.repository.PostSearchRepository;
 import com.socialnetwork.post.repository.PostRepository;
 import com.socialnetwork.post.util.MapperUtils;
 
@@ -37,6 +38,7 @@ public class PostServiceImpl implements PostService {
   private final ProfileService profileService;
   private final UploadService uploadService;
   private final PostRepository postRepository;
+  private final PostSearchRepository postSearchRepository;
   private final RabbitTemplate rabbitTemplate;
 
   @Override
@@ -53,7 +55,8 @@ public class PostServiceImpl implements PostService {
     post.setCreatedAt(new Date());
     post.setCreatedByProfileId(profile.getId());
     post.setImageUrl(url);
-    postRepository.save(post);
+    post = postRepository.save(post);
+    saveToElasticsearch(post);
     log.info("Created post with id: {} by profileId: {}", post.getId(), profile.getId());
 
     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
@@ -187,7 +190,36 @@ public class PostServiceImpl implements PostService {
         .stream().map(this::toPostDto).collect(Collectors.toList());
   }
 
+  @Override
+  public List<PostDto> searchPosts(String query) {
+    if (query == null || query.trim().isEmpty()) {
+      return Collections.emptyList();
+    }
+    List<Integer> postIds = postSearchRepository.findByContentContainingIgnoreCase(query)
+        .stream()
+        .map(doc -> Integer.parseInt(doc.getId()))
+        .collect(Collectors.toList());
+    
+    if (postIds.isEmpty()) return Collections.emptyList();
+    
+    return postRepository.findAllById(postIds)
+        .stream()
+        .map(this::toPostDto)
+        .collect(Collectors.toList());
+  }
+
   // ── Private helper ────────────────────────────────────────────────────────
+
+  private void saveToElasticsearch(Post post) {
+    if (post == null) return;
+    PostDocument doc = PostDocument.builder()
+        .id(String.valueOf(post.getId()))
+        .createdByProfileId(String.valueOf(post.getCreatedByProfileId()))
+        .content(post.getCaption())
+        .imageUrl(post.getImageUrl())
+        .build();
+    postSearchRepository.save(doc);
+  }
 
   private PostDto toPostDto(Post post) {
     ProfileDto author = profileService.getUserProfile(post.getCreatedByProfileId());

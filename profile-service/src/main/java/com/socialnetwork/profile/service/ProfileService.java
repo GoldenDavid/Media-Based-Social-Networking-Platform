@@ -8,6 +8,8 @@ import com.socialnetwork.common.security.UserPrincipal;
 import com.socialnetwork.profile.dto.UpdateProfileImageRequest;
 import com.socialnetwork.profile.dto.UpdateProfileRequest;
 import com.socialnetwork.profile.model.Profile;
+import com.socialnetwork.profile.model.ProfileDocument;
+import com.socialnetwork.profile.repository.ProfileSearchRepository;
 import com.socialnetwork.profile.repository.ProfileRepository;
 
 import io.grpc.StatusRuntimeException;
@@ -29,6 +31,7 @@ import java.util.Objects;
 public class ProfileService {
 
     private final ProfileRepository profileRepository;
+    private final ProfileSearchRepository profileSearchRepository;
 
     @GrpcClient("media-service")
     private MediaServiceGrpc.MediaServiceBlockingStub mediaServiceStub;
@@ -49,7 +52,8 @@ public class ProfileService {
         profile.setBio(request.getBio());
         profile.setDisplayName(request.getDisplayName());
         profile.setUsername(request.getUsername());
-        profileRepository.save(profile);
+        profile = profileRepository.save(profile);
+        saveToElasticsearch(profile);
         log.info("Updated profile for user: {}", profile.getUsername());
         return toDto(profile);
     }
@@ -59,7 +63,8 @@ public class ProfileService {
         String url = uploadImageViaGrpc(request.getBase64ImageString());
         Profile profile = getOrCreateProfile(userPrincipal);
         profile.setProfileImageUrl(url);
-        profileRepository.save(profile);
+        profile = profileRepository.save(profile);
+        saveToElasticsearch(profile);
         return toDto(profile);
     }
 
@@ -67,9 +72,15 @@ public class ProfileService {
         if (query == null || query.trim().isEmpty()) {
             return java.util.Collections.emptyList();
         }
-        return profileRepository.findTop20ByUsernameContainingIgnoreCaseOrDisplayNameContainingIgnoreCase(query, query)
+        return profileSearchRepository.findByUsernameContainingOrDisplayNameContaining(query, query)
                 .stream()
-                .map(this::toDto)
+                .map(doc -> ProfileDto.builder()
+                        .id(Integer.parseInt(doc.getId()))
+                        .displayName(doc.getDisplayName())
+                        .username(doc.getUsername())
+                        .bio(doc.getBio())
+                        .profileImageUrl(doc.getProfileImageUrl())
+                        .build())
                 .toList();
     }
 
@@ -86,7 +97,8 @@ public class ProfileService {
             profile = new Profile();
             profile.setUserId(userPrincipal.getId().toString());
             profile.setDisplayName(userPrincipal.getName());
-            profileRepository.save(profile);
+            profile = profileRepository.save(profile);
+            saveToElasticsearch(profile);
             log.info("Auto-provisioned profile for userId={}", userPrincipal.getId());
         }
         return profile;
@@ -111,7 +123,20 @@ public class ProfileService {
         return null;
     }
 
-    // ── Mapper ────────────────────────────────────────────────────────────────
+    // ── Mapper & Helpers ──────────────────────────────────────────────────────
+
+    private void saveToElasticsearch(Profile p) {
+        if (p == null) return;
+        ProfileDocument doc = ProfileDocument.builder()
+                .id(String.valueOf(p.getId()))
+                .userId(p.getUserId())
+                .displayName(p.getDisplayName())
+                .username(p.getUsername())
+                .bio(p.getBio())
+                .profileImageUrl(p.getProfileImageUrl())
+                .build();
+        profileSearchRepository.save(doc);
+    }
 
     public ProfileDto toDto(Profile p) {
         return ProfileDto.builder()

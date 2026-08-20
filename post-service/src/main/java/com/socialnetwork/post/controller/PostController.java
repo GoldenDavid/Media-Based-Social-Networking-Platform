@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.socialnetwork.common.dto.BaseResponse;
@@ -86,6 +87,12 @@ public class PostController {
   public ResponseEntity<BaseResponse<GetUserPostResponse>> getSavedPosts(Authentication authentication) {
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
     List<PostDto> posts = postService.getSavedPosts(userPrincipal);
+    return ResponseEntity.ok().body(BaseResponse.ok(GetUserPostResponse.builder().posts(posts).build()));
+  }
+
+  @GetMapping("/search")
+  public ResponseEntity<BaseResponse<GetUserPostResponse>> searchPosts(@RequestParam String query) {
+    List<PostDto> posts = postService.searchPosts(query);
     return ResponseEntity.ok().body(BaseResponse.ok(GetUserPostResponse.builder().posts(posts).build()));
   }
 }

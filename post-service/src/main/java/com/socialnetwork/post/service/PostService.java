@@ -27,4 +27,6 @@ public interface PostService {
   PostDto unsavePost(UserPrincipal userPrincipal, int postId);
 
   List<PostDto> getSavedPosts(UserPrincipal userPrincipal);
+
+  List<PostDto> searchPosts(String query);
 }

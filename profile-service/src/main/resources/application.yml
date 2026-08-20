@@ -25,6 +25,8 @@ spring:
       port: ${REDIS_PORT:6379}
       database: 0
       password: ${REDIS_PASSWORD:}
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URI:http://localhost:9200}
 
   session:
     store-type: redis
@@ -75,6 +77,8 @@ spring:
       host: redis
       port: 6379
       password: ${REDIS_PASSWORD:devpassword}
+  elasticsearch:
+    uris: http://elasticsearch:9200
 grpc:
   client:
     media-service:
