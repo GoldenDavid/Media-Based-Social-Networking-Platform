@@ -18,6 +18,7 @@ import com.socialnetwork.post.config.MessageQueueConfig;
 import com.socialnetwork.post.dto.CommentDto;
 import com.socialnetwork.post.dto.CreatePostRequest;
 import com.socialnetwork.post.dto.PostDto;
+import com.socialnetwork.post.model.Post;
 import com.socialnetwork.post.dto.ProfileDto;
 import com.socialnetwork.common.security.UserPrincipal;
 import com.socialnetwork.post.exception.NoPermissionException;
@@ -55,14 +56,14 @@ public class PostServiceImpl implements PostService {
     post.setCreatedAt(new Date());
     post.setCreatedByProfileId(profile.getId());
     post.setImageUrl(url);
-    post = postRepository.save(post);
-    saveToElasticsearch(post);
-    log.info("Created post with id: {} by profileId: {}", post.getId(), profile.getId());
+    final Post savedPost = postRepository.save(post);
+    saveToElasticsearch(savedPost);
+    log.info("Created post with id: {} by profileId: {}", savedPost.getId(), profile.getId());
 
     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
       @Override
       public void afterCommit() {
-        rabbitTemplate.convertAndSend(MessageQueueConfig.AFTER_CREATE_POST_QUEUE, post.getId());
+        rabbitTemplate.convertAndSend(MessageQueueConfig.AFTER_CREATE_POST_QUEUE, savedPost.getId());
 
         // Fan-out a NEW_POST notification to every follower of the post author.
         // Failures are logged, not thrown, so a misbehaving follower fetch does not
@@ -74,7 +75,7 @@ public class PostServiceImpl implements PostService {
                 .type(NotificationType.NEW_POST)
                 .fromProfileId(profile.getId())
                 .toProfileId(followerId)
-                .postId(post.getId())
+                .postId(savedPost.getId())
                 .build();
             rabbitTemplate.convertAndSend(MessageQueueConfig.NOTIFICATION_EVENT_QUEUE, event);
           }
@@ -82,12 +83,12 @@ public class PostServiceImpl implements PostService {
               followerIds.size(), profile.getId());
         } catch (Exception ex) {
           log.warn("Failed to fan out NEW_POST notifications for postId={}: {}",
-              post.getId(), ex.getMessage());
+              savedPost.getId(), ex.getMessage());
         }
       }
     });
 
-    return toPostDto(post);
+    return toPostDto(savedPost);
   }
 
   @Override

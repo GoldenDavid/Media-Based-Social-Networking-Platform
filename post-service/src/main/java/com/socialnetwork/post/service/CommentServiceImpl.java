@@ -36,6 +36,7 @@ public class CommentServiceImpl implements CommentService {
   private final PostRepository postRepository;
   private final CommentRepository commentRepository;
   private final RabbitTemplate rabbitTemplate;
+  private final PostService postService;
 
   @Override
   @Transactional
@@ -72,9 +73,7 @@ public class CommentServiceImpl implements CommentService {
       }
     });
 
-    // Return a minimal PostDto (full hydration is handled by PostServiceImpl.toPostDto)
-    return MapperUtils.toDto(post, profileService.getUserProfile(post.getCreatedByProfileId()),
-        java.util.Collections.emptyList(), java.util.Collections.emptySet());
+    return postService.getPost(post.getId());
   }
 
   @Override
@@ -91,7 +90,6 @@ public class CommentServiceImpl implements CommentService {
     commentRepository.delete(comment);
 
     log.info("profileId={} deleted comment={}", profile.getId(), commentId);
-    return MapperUtils.toDto(post, profileService.getUserProfile(post.getCreatedByProfileId()),
-        java.util.Collections.emptyList(), java.util.Collections.emptySet());
+    return postService.getPost(post.getId());
   }
 }
