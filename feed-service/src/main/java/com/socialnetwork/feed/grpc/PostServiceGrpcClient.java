@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.socialnetwork.feed.dto.PostDto;
 import com.socialnetwork.feed.dto.ProfileDto;
+import com.socialnetwork.feed.dto.StoryDto;
 import com.socialnetwork.grpc.post.CountPostsByAuthorsRequest;
 import com.socialnetwork.grpc.post.CountPostsResponse;
 import com.socialnetwork.grpc.post.GetPostsByAuthorsRequest;
@@ -136,5 +137,64 @@ public class PostServiceGrpcClient {
             .createdBy(ProfileDto.builder().id(r.getCreatedByProfileId()).build())
             .userLikes(unhydratedLikes)
             .build();
+    }
+
+    public List<StoryDto> getActiveStories(List<Integer> authorIds) {
+        if (authorIds == null || authorIds.isEmpty()) return List.of();
+
+        try {
+            com.socialnetwork.grpc.post.GetActiveStoriesResponse response = stub.getActiveStories(
+                com.socialnetwork.grpc.post.GetActiveStoriesRequest.newBuilder()
+                    .addAllAuthorProfileIds(authorIds)
+                    .build());
+            
+            List<StoryDto> stories = response.getStoriesList().stream()
+                .map(r -> StoryDto.builder()
+                    .id(r.getId())
+                    .imageUrl(r.getImageUrl())
+                    .createdAt(new java.util.Date(r.getCreatedAt()))
+                    .createdBy(ProfileDto.builder().id(r.getCreatedByProfileId()).build())
+                    .build())
+                .collect(java.util.stream.Collectors.toList());
+                
+            return hydrateStoryAuthors(stories);
+        } catch (StatusRuntimeException e) {
+            log.error("gRPC GetActiveStories failed: {}", e.getStatus());
+            return List.of();
+        }
+    }
+    
+    private List<StoryDto> hydrateStoryAuthors(List<StoryDto> stories) {
+        java.util.Set<Integer> profileIds = new java.util.HashSet<>();
+        
+        stories.forEach(s -> {
+            if (s.getCreatedBy() != null) {
+                profileIds.add(s.getCreatedBy().getId());
+            }
+        });
+
+        if (profileIds.isEmpty()) {
+            return stories;
+        }
+
+        List<Integer> idsList = new java.util.ArrayList<>(profileIds);
+        List<ProfileDto> resolved = profileServiceGrpcClient.getProfilesByIds(idsList);
+
+        Map<Integer, ProfileDto> profilesById = new java.util.HashMap<>();
+        for (ProfileDto p : resolved) {
+            if (p != null) {
+                profilesById.put(p.getId(), p);
+            }
+        }
+
+        stories.forEach(s -> {
+            if (s.getCreatedBy() != null) {
+                ProfileDto hydrated = profilesById.get(s.getCreatedBy().getId());
+                if (hydrated != null) {
+                    s.setCreatedBy(hydrated);
+                }
+            }
+        });
+        return stories;
     }
 }

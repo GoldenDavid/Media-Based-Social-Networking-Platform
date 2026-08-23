@@ -34,6 +34,18 @@ export interface FeedResponse {
   totalPage: number;
 }
 
+export interface StoryDto {
+  id: number;
+  createdBy: ProfileDto;
+  imageUrl: string;
+  createdAt: string;
+}
+
+export interface StoryFeedDto {
+  author: ProfileDto;
+  stories: StoryDto[];
+}
+
 export interface BaseResponse<T> {
   success: boolean;
   message: string;
@@ -107,6 +119,14 @@ const resolvePostImages = (post: PostDto) => {
   post.userSaves?.forEach(resolveProfileImages);
   post.comments?.forEach(c => resolveProfileImages(c.createdBy));
   return post;
+};
+
+const resolveStoryImages = (story: StoryDto) => {
+  if (story.imageUrl && !story.imageUrl.startsWith('http')) {
+    story.imageUrl = `${MEDIA_BASE_URL}/${story.imageUrl}`;
+  }
+  resolveProfileImages(story.createdBy);
+  return story;
 };
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
@@ -273,6 +293,28 @@ export const api = {
       throw new Error(wrapped.message || 'Failed to create post');
     }
     return resolvePostImages(unwrap(wrapped).post);
+  },
+
+  createStory: async (base64ImageString: string): Promise<StoryDto> => {
+    const wrapped = await apiFetch<BaseResponse<{ story: StoryDto }>>('/stories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ base64ImageString }),
+    });
+    if (!wrapped.success) {
+      throw new Error(wrapped.message || 'Failed to create story');
+    }
+    return resolveStoryImages(unwrap(wrapped).story);
+  },
+
+  getStoryFeeds: async (): Promise<StoryFeedDto[]> => {
+    const wrapped = await apiFetch<BaseResponse<{ storyFeeds: StoryFeedDto[] }>>('/story-feeds');
+    const storyFeeds = unwrap(wrapped).storyFeeds ?? [];
+    storyFeeds.forEach(sf => {
+      resolveProfileImages(sf.author);
+      sf.stories?.forEach(resolveStoryImages);
+    });
+    return storyFeeds;
   },
 
   deletePost: async (postId: number): Promise<void> => {

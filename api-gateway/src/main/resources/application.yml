@@ -43,13 +43,13 @@ spring:
         - id: post-service
           uri: http://${POST_SERVICE_HOST:localhost}:8085
           predicates:
-            - Path=/posts/**, /comments/**
+            - Path=/posts/**, /comments/**, /stories/**
 
         # Feed Service
         - id: feed-service
           uri: http://${FEED_SERVICE_HOST:localhost}:8087
           predicates:
-            - Path=/dynamic-feeds/**, /precomputed-feeds/**
+            - Path=/dynamic-feeds/**, /precomputed-feeds/**, /story-feeds/**
 
         # Notification Service (REST + STOMP WebSocket handshake)
         - id: notification-service

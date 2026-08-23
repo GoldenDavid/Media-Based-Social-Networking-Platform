@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { Zap, Layers } from 'lucide-react';
 import PostCard from '../components/PostCard';
 import { useAuth } from '../contexts/AuthContext';
-import { api, type PostDto } from '../services/api';
+import { api, type PostDto, type StoryFeedDto } from '../services/api';
+import StoriesBar from '../components/StoriesBar';
+import StoryViewer from '../components/StoryViewer';
 import './Home.css';
 
 type FeedSource = 'dynamic' | 'precomputed';
@@ -22,6 +24,8 @@ const readPersistedFeedSource = (): FeedSource => {
 const Home = () => {
   const { user, loading: authLoading } = useAuth();
   const [posts, setPosts] = useState<PostDto[]>([]);
+  const [storyFeeds, setStoryFeeds] = useState<StoryFeedDto[]>([]);
+  const [selectedStoryAuthorId, setSelectedStoryAuthorId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [feedSource, setFeedSource] = useState<FeedSource>(readPersistedFeedSource);
 
@@ -64,6 +68,18 @@ const Home = () => {
     // setState synchronously (React 19 anti-pattern flagged by
     // react-hooks/set-state-in-effect).
     void Promise.resolve().then(fetchFeed);
+
+    const fetchStories = async () => {
+      if (!user || cancelled) return;
+      try {
+        const feeds = await api.getStoryFeeds();
+        if (!cancelled) setStoryFeeds(feeds);
+      } catch (error) {
+        console.error("Failed to fetch stories:", error);
+      }
+    };
+    void Promise.resolve().then(fetchStories);
+
     return () => { cancelled = true; };
   }, [authLoading, user, feedSource]);
 
@@ -101,6 +117,16 @@ const Home = () => {
         </div>
       </header>
 
+      {user && (
+        <div style={{ marginBottom: '20px' }}>
+          <StoriesBar 
+            storyFeeds={storyFeeds} 
+            onStoryClick={setSelectedStoryAuthorId} 
+            onStoryCreated={() => api.getStoryFeeds().then(setStoryFeeds)} 
+          />
+        </div>
+      )}
+
       <div className="feed-container">
         {loading ? (
           <div className="loading-spinner">Loading...</div>
@@ -117,6 +143,15 @@ const Home = () => {
           ))
         )}
       </div>
+
+
+      {selectedStoryAuthorId !== null && (
+        <StoryViewer 
+          storyFeeds={storyFeeds}
+          initialAuthorId={selectedStoryAuthorId}
+          onClose={() => setSelectedStoryAuthorId(null)}
+        />
+      )}
     </div>
   );
 };

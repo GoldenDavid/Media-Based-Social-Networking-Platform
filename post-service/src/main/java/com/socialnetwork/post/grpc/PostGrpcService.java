@@ -24,12 +24,22 @@ import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import com.socialnetwork.grpc.post.GetActiveStoriesRequest;
+import com.socialnetwork.grpc.post.GetActiveStoriesResponse;
+import com.socialnetwork.grpc.post.StoryResponse;
+import com.socialnetwork.post.model.Story;
+import com.socialnetwork.post.repository.StoryRepository;
+import java.util.Date;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
 @Slf4j
 @GrpcService
 @RequiredArgsConstructor
 public class PostGrpcService extends PostServiceGrpc.PostServiceImplBase {
 
     private final PostRepository postRepository;
+    private final StoryRepository storyRepository;
 
     @Override
     public void getPost(GetPostRequest request, StreamObserver<PostResponse> responseObserver) {
@@ -124,5 +134,37 @@ public class PostGrpcService extends PostServiceGrpc.PostServiceImplBase {
             builder.addAllUserLikesProfileIds(post.getUserLikesProfileIds());
         }
         return builder.build();
+    }
+
+    @Override
+    public void getActiveStories(GetActiveStoriesRequest request, StreamObserver<GetActiveStoriesResponse> responseObserver) {
+        log.info("gRPC GetActiveStories: size={}", request.getAuthorProfileIdsCount());
+        try {
+            Date twentyFourHoursAgo = Date.from(Instant.now().minus(24, ChronoUnit.HOURS));
+            List<Story> stories = storyRepository.findByCreatedByProfileIdInAndCreatedAtAfter(
+                    request.getAuthorProfileIdsList(), 
+                    twentyFourHoursAgo);
+
+            List<StoryResponse> storyResponses = stories.stream()
+                    .map(this::toStoryResponse)
+                    .collect(Collectors.toList());
+
+            responseObserver.onNext(GetActiveStoriesResponse.newBuilder()
+                    .addAllStories(storyResponses)
+                    .build());
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            log.error("gRPC GetActiveStories error", e);
+            responseObserver.onError(Status.INTERNAL.withCause(e).asRuntimeException());
+        }
+    }
+
+    private StoryResponse toStoryResponse(Story story) {
+        return StoryResponse.newBuilder()
+                .setId(story.getId())
+                .setImageUrl(story.getImageUrl() != null ? story.getImageUrl() : "")
+                .setCreatedByProfileId(story.getCreatedByProfileId())
+                .setCreatedAt(story.getCreatedAt() != null ? story.getCreatedAt().getTime() : 0)
+                .build();
     }
 }

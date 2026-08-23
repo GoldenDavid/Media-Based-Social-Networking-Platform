@@ -24,6 +24,9 @@ service PostService {
 
   // Paginated fetch of posts authored by a list of profile IDs.
   rpc GetPostsByAuthors (GetPostsByAuthorsRequest) returns (PostsResponse);
+
+  // Fetch active stories (last 24 hours) for a list of profile IDs.
+  rpc GetActiveStories (GetActiveStoriesRequest) returns (GetActiveStoriesResponse);
 }
 
 // ── Request / Response messages ─────────────────────────────────────────────
@@ -64,4 +67,22 @@ message GetPostsByAuthorsRequest {
   repeated int32 author_profile_ids = 1;
   int32 limit  = 2;
   int32 offset = 3;
+}
+
+// ── Stories ───────────────────────────────────────────────────────────────
+
+message GetActiveStoriesRequest {
+  repeated int32 author_profile_ids = 1;
+}
+
+message StoryResponse {
+  int32  id                  = 1;
+  string image_url           = 2;
+  int32  created_by_profile_id = 3;
+  // Epoch millis
+  int64  created_at          = 4;
+}
+
+message GetActiveStoriesResponse {
+  repeated StoryResponse stories = 1;
 }
