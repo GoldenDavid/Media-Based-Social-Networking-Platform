@@ -20,4 +20,7 @@ class ProfileServiceApplicationTests {
         assertThat(context).isNotNull();
         assertThat(context.getBean(ProfileServiceApplication.class)).isNotNull();
     }
+
+    @org.springframework.boot.test.mock.mockito.MockBean
+    com.socialnetwork.profile.repository.ProfileSearchRepository profileSearchRepository;
 }

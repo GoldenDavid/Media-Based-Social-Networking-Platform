@@ -34,6 +34,9 @@ class PostServiceApplicationTests {
         assertThat(context.getBean(PostServiceApplication.class)).isNotNull();
     }
 
+    @org.springframework.boot.test.mock.mockito.MockBean
+    com.socialnetwork.post.repository.PostSearchRepository postSearchRepository;
+
     /**
      * Provide a stub {@link RabbitTemplate} so the service constructor
      * can be satisfied without an actual broker. The bean is intentionally
