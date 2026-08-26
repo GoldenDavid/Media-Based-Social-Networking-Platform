@@ -112,6 +112,7 @@ public class PostServiceImpl implements PostService {
       throw new NoPermissionException();
     }
     postRepository.delete(post);
+    postSearchRepository.deleteById(String.valueOf(postId));
     log.info("Deleted post with id: {}", postId);
   }
 

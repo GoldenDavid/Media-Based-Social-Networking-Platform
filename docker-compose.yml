@@ -168,6 +168,8 @@ services:
         condition: service_healthy
       media-service:
         condition: service_started
+      elasticsearch:
+        condition: service_healthy
     restart: always
     ports:
       - "127.0.0.1:8084:8084"
@@ -200,6 +202,8 @@ services:
       media-service:
         condition: service_started
       rabbitmq:
+        condition: service_healthy
+      elasticsearch:
         condition: service_healthy
     restart: always
     ports:
