@@ -9,28 +9,15 @@ interface StoryViewerProps {
 }
 
 const StoryViewer: React.FC<StoryViewerProps> = ({ storyFeeds, initialAuthorId, onClose }) => {
-  const [currentFeedIndex, setCurrentFeedIndex] = useState(0);
-  const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
-
-  useEffect(() => {
+  const [currentFeedIndex, setCurrentFeedIndex] = useState(() => {
     if (initialAuthorId) {
       const index = storyFeeds.findIndex(feed => feed.author.id === initialAuthorId);
-      if (index !== -1) {
-        setCurrentFeedIndex(index);
-        setCurrentStoryIndex(0);
-      }
+      return index !== -1 ? index : 0;
     }
-  }, [initialAuthorId, storyFeeds]);
-
-  // Auto advance story every 5 seconds
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      handleNext();
-    }, 5000);
-    return () => clearTimeout(timer);
-  }, [currentFeedIndex, currentStoryIndex]);
-
-  const handleNext = () => {
+    return 0;
+  });
+  const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
+  const handleNext = React.useCallback(() => {
     const currentFeed = storyFeeds[currentFeedIndex];
     if (currentStoryIndex < currentFeed.stories.length - 1) {
       // Next story in current feed
@@ -43,9 +30,9 @@ const StoryViewer: React.FC<StoryViewerProps> = ({ storyFeeds, initialAuthorId, 
       // End of all stories
       onClose();
     }
-  };
+  }, [currentFeedIndex, currentStoryIndex, storyFeeds, onClose]);
 
-  const handlePrev = () => {
+  const handlePrev = React.useCallback(() => {
     if (currentStoryIndex > 0) {
       // Prev story in current feed
       setCurrentStoryIndex(prev => prev - 1);
@@ -57,7 +44,15 @@ const StoryViewer: React.FC<StoryViewerProps> = ({ storyFeeds, initialAuthorId, 
       // Beginning of all stories
       onClose();
     }
-  };
+  }, [currentFeedIndex, currentStoryIndex, storyFeeds, onClose]);
+
+  // Auto advance story every 5 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      handleNext();
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [handleNext]);
 
   if (storyFeeds.length === 0) return null;
 

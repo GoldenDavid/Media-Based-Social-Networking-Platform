@@ -12,6 +12,18 @@ const Explore = () => {
   const navigate = useNavigate();
   const { profileId } = useAuth();
 
+  const search = React.useCallback(async (searchQuery: string) => {
+    setLoading(true);
+    try {
+      const profiles = await api.searchUsers(searchQuery);
+      setResults(profiles);
+    } catch (error) {
+      console.error('Failed to search users', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       if (query.trim()) {
@@ -22,19 +34,9 @@ const Explore = () => {
     }, 300); // 300ms debounce
 
     return () => clearTimeout(delayDebounceFn);
-  }, [query]);
+  }, [query, search]);
 
-  const search = async (searchQuery: string) => {
-    setLoading(true);
-    try {
-      const profiles = await api.searchUsers(searchQuery);
-      setResults(profiles);
-    } catch (error) {
-      console.error('Failed to search users', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   return (
     <div className="explore-container animate-fade-in" style={{ padding: '24px', maxWidth: '600px', margin: '0 auto' }}>

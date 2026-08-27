@@ -79,7 +79,7 @@ const UserProfile = () => {
     };
     void Promise.resolve().then(fetchProfileData);
     return () => { cancelled = true; };
-  }, [authLoading, id, user]);
+  }, [authLoading, id, user, profileId]);
 
   if (loading) {
     return <div className="loading-spinner">Loading...</div>;
