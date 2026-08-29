@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { api, type ProfileDto } from '../services/api';
@@ -12,7 +12,7 @@ const Explore = () => {
   const navigate = useNavigate();
   const { profileId } = useAuth();
 
-  const search = React.useCallback(async (searchQuery: string) => {
+  const search = useCallback(async (searchQuery: string) => {
     setLoading(true);
     try {
       const profiles = await api.searchUsers(searchQuery);

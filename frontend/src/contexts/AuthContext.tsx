@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (profile && profile.id) {
         setProfileId(profile.id);
         const followingsResp = await api.getFollowings(profile.id, 1, 1000);
-        setFollowingIds(followingsResp.followings.map((f: any) => f.id));
+        setFollowingIds(followingsResp.followings.map((f: { id: number }) => f.id));
       }
     } catch (e) {
       console.error("Failed to fetch followings", e);

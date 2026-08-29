@@ -83,8 +83,8 @@ const Profile = () => {
       updatedProfile = await api.updateProfile(editForm.displayName, editForm.username, editForm.bio);
       setProfile(updatedProfile);
       setIsEditing(false);
-    } catch (err: any) {
-      alert("Failed to save profile: " + err.message);
+    } catch (err: unknown) {
+      alert("Failed to save profile: " + (err instanceof Error ? err.message : String(err)));
     } finally {
       setIsSaving(false);
     }

@@ -132,7 +132,7 @@ const resolveStoryImages = (story: StoryDto) => {
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const url = `${API_BASE_URL}${path}`;
   const token = localStorage.getItem('jwtToken');
-  const headers = { Accept: 'application/json', ...init?.headers } as any;
+  const headers = { Accept: 'application/json', ...init?.headers } as Record<string, string>;
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
@@ -152,7 +152,7 @@ export const api = {
   inspectAuth: async (): Promise<UserPrincipal | null> => {
     const url = `${API_BASE_URL}/auth/inspect`;
     const token = localStorage.getItem('jwtToken');
-    const headers = { Accept: 'application/json' } as any;
+    const headers = { Accept: 'application/json' } as Record<string, string>;
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
@@ -318,7 +318,7 @@ export const api = {
   },
 
   deletePost: async (postId: number): Promise<void> => {
-    const wrapped = await apiFetch<BaseResponse<any>>(`/posts/${postId}`, {
+    const wrapped = await apiFetch<BaseResponse<unknown>>(`/posts/${postId}`, {
       method: 'DELETE',
     });
     if (wrapped.success === false) {
@@ -386,7 +386,7 @@ export const api = {
   },
 
   deleteComment: async (commentId: number): Promise<void> => {
-    const wrapped = await apiFetch<BaseResponse<any>>(`/comments/${commentId}`, {
+    const wrapped = await apiFetch<BaseResponse<unknown>>(`/comments/${commentId}`, {
       method: 'DELETE',
     });
     if (wrapped.success === false) {
