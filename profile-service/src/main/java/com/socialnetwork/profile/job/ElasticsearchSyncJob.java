@@ -4,6 +4,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -45,7 +46,7 @@ public class ElasticsearchSyncJob {
         Page<Profile> profilePage;
 
         do {
-            profilePage = profileRepository.findAll(PageRequest.of(page, size));
+            profilePage = profileRepository.findAll(PageRequest.of(page, size, Sort.by("id")));
             List<ProfileDocument> documents = profilePage.getContent().stream()
                     .map(p -> ProfileDocument.builder()
                             .id(String.valueOf(p.getId()))
