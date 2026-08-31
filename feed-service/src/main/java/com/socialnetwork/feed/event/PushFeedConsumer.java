@@ -51,6 +51,9 @@ public class PushFeedConsumer {
         List<Integer> followerIds = profileService.getFollowerIds(authorProfileId);
         log.info("Fanning out postId={} to {} followers", postId, followerIds.size());
 
+        // Add post to author's own feed
+        feedRepository.addPostToFeed(postId, authorProfileId);
+
         for (int followerProfileId : followerIds) {
             feedRepository.addPostToFeed(postId, followerProfileId);
         }
