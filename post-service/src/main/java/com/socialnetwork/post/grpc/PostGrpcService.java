@@ -32,10 +32,12 @@ import com.socialnetwork.post.repository.StoryRepository;
 import java.util.Date;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @GrpcService
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class PostGrpcService extends PostServiceGrpc.PostServiceImplBase {
 
     private final PostRepository postRepository;
