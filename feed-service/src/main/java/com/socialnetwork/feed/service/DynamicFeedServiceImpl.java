@@ -33,11 +33,15 @@ public class DynamicFeedServiceImpl implements FeedService {
         List<Integer> followingProfileIds = profileService.getFollowingIds(profileId);
         log.info("followingProfileIds={}", followingProfileIds);
 
+        // Add self to see own posts
+        List<Integer> feedProfileIds = new java.util.ArrayList<>(followingProfileIds);
+        feedProfileIds.add(profileId);
+
         int offset = (page - 1) * limit;
 
-        List<PostDto> posts = postService.getPostsByAuthors(followingProfileIds, limit, offset);
+        List<PostDto> posts = postService.getPostsByAuthors(feedProfileIds, limit, offset);
 
-        int totalPosts = postService.countPostsByAuthors(followingProfileIds);
+        int totalPosts = postService.countPostsByAuthors(feedProfileIds);
         int totalPage = totalPosts == 0 ? 0 : (int) Math.ceil((double) totalPosts / limit);
 
         return GetFeedResponse.builder()
