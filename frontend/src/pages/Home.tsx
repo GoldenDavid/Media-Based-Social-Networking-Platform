@@ -1,105 +1,41 @@
-import { useCallback, useEffect, useState } from 'react';
 import { Zap, Layers } from 'lucide-react';
 import PostCard from '../components/PostCard';
 import { useAuth } from '../contexts/AuthContext';
-import { api, type PostDto, type StoryFeedDto } from '../services/api';
 import StoriesBar from '../components/StoriesBar';
 import StoryViewer from '../components/StoryViewer';
+import { useFeed } from '../hooks/useFeed';
+import { useStories } from '../hooks/useStories';
 import './Home.css';
 
-type FeedSource = 'dynamic' | 'precomputed';
-
-const FEED_SOURCE_KEY = 'app:feedSource';
-
-const readPersistedFeedSource = (): FeedSource => {
-  try {
-    const stored = localStorage.getItem(FEED_SOURCE_KEY);
-    if (stored === 'dynamic' || stored === 'precomputed') return stored;
-  } catch {
-    // localStorage may be unavailable (private mode, quota, etc.) — fall through.
-  }
-  return 'dynamic';
-};
-
 const Home = () => {
-  const { user, loading: authLoading } = useAuth();
-  const [posts, setPosts] = useState<PostDto[]>([]);
-  const [storyFeeds, setStoryFeeds] = useState<StoryFeedDto[]>([]);
-  const [selectedStoryAuthorId, setSelectedStoryAuthorId] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [feedSource, setFeedSource] = useState<FeedSource>(readPersistedFeedSource);
+  const { user } = useAuth();
+  
+  const {
+    posts,
+    loading,
+    feedSource,
+    handleSwitchSource,
+    handlePostUpdated
+  } = useFeed();
 
-  const handlePostUpdated = useCallback((updated: PostDto) => {
-    setPosts(prev => prev.map(p => p.id === updated.id ? updated : p));
-  }, []);
-
-  useEffect(() => {
-    if (authLoading) return;
-    let cancelled = false;
-    const fetchFeed = async () => {
-      if (!user) {
-        // Not signed in — clear any stale posts from a previous session
-        // and clear the loading spinner. The setState calls are
-        // intentional (one-shot bootstrap, not a render-time derivation)
-        // and the effect's effect runs once per auth-state change.
-        if (!cancelled) {
-          setPosts([]);
-          setLoading(false);
-        }
-        return;
-      }
-      if (!cancelled) setLoading(true);
-      try {
-        // Per ADR-018: dynamic is the source of truth; precomputed is
-        // opt-in. Both endpoints return a flat GetFeedResponse (no
-        // BaseResponse envelope).
-        const response = feedSource === 'precomputed'
-          ? await api.getPrecomputedFeed(1, 10)
-          : await api.getFeed(1, 10);
-        if (!cancelled) setPosts(response.posts || []);
-      } catch (error) {
-        console.error("Failed to fetch feed:", error);
-        if (!cancelled) setPosts([]);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-    // Defer to a microtask so the effect body itself does not call
-    // setState synchronously (React 19 anti-pattern flagged by
-    // react-hooks/set-state-in-effect).
-    void Promise.resolve().then(fetchFeed);
-
-    const fetchStories = async () => {
-      if (!user || cancelled) return;
-      try {
-        const feeds = await api.getStoryFeeds();
-        if (!cancelled) setStoryFeeds(feeds);
-      } catch (error) {
-        console.error("Failed to fetch stories:", error);
-      }
-    };
-    void Promise.resolve().then(fetchStories);
-
-    return () => { cancelled = true; };
-  }, [authLoading, user, feedSource]);
-
-  const handleSwitch = (next: FeedSource) => {
-    if (next === feedSource) return;
-    setFeedSource(next);
-    try { localStorage.setItem(FEED_SOURCE_KEY, next); } catch { /* ignore */ }
-  };
+  const {
+    storyFeeds,
+    selectedStoryAuthorId,
+    setSelectedStoryAuthorId,
+    refreshStories
+  } = useStories();
 
   return (
-    <div className="home-container">
+    <main className="home-container">
       <header className="home-header">
         <h1 className="text-gradient">For You</h1>
-        <div className="feed-source-toggle" role="tablist" aria-label="Feed source">
+        <nav className="feed-source-toggle" role="tablist" aria-label="Feed source">
           <button
             type="button"
             role="tab"
             aria-selected={feedSource === 'dynamic'}
             className={`feed-source-btn ${feedSource === 'dynamic' ? 'active' : ''}`}
-            onClick={() => handleSwitch('dynamic')}
+            onClick={() => handleSwitchSource('dynamic')}
             title="Live feed (source of truth)"
           >
             <Zap size={14} /> Dynamic
@@ -109,29 +45,32 @@ const Home = () => {
             role="tab"
             aria-selected={feedSource === 'precomputed'}
             className={`feed-source-btn ${feedSource === 'precomputed' ? 'active' : ''}`}
-            onClick={() => handleSwitch('precomputed')}
+            onClick={() => handleSwitchSource('precomputed')}
             title="Fan-out cache (Redis, may lag by seconds)"
           >
             <Layers size={14} /> Precomputed
           </button>
-        </div>
+        </nav>
       </header>
 
       {user && (
-        <div style={{ marginBottom: '20px' }}>
+        <section style={{ marginBottom: '20px' }} aria-label="Stories">
           <StoriesBar 
             storyFeeds={storyFeeds} 
             onStoryClick={setSelectedStoryAuthorId} 
-            onStoryCreated={() => api.getStoryFeeds().then(setStoryFeeds)} 
+            onStoryCreated={refreshStories} 
           />
-        </div>
+        </section>
       )}
 
-      <div className="feed-container">
+      <section className="feed-container" aria-label="Feed Posts">
         {loading ? (
-          <div className="loading-spinner">Loading...</div>
+          <div className="skeleton" style={{ height: '200px', margin: '20px 0' }}></div>
         ) : posts.length === 0 ? (
-          <div className="empty-state animate-fade-in">No posts in your feed yet!</div>
+          <div className="empty-state animate-fade-in">
+            <h2>No posts in your feed yet!</h2>
+            <p className="text-secondary">Follow people to see their updates here.</p>
+          </div>
         ) : (
           posts.map(post => (
             <PostCard
@@ -142,8 +81,7 @@ const Home = () => {
             />
           ))
         )}
-      </div>
-
+      </section>
 
       {selectedStoryAuthorId !== null && (
         <StoryViewer 
@@ -152,7 +90,7 @@ const Home = () => {
           onClose={() => setSelectedStoryAuthorId(null)}
         />
       )}
-    </div>
+    </main>
   );
 };
 

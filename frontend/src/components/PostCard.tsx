@@ -1,7 +1,10 @@
 import { memo, useState } from 'react';
-import { Heart, MessageCircle, Share2, MoreHorizontal, Bookmark, X, Send, Trash2 } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { api, type PostDto, type UserPrincipal } from '../services/api';
+import { PostHeader } from './PostHeader';
+import { PostActions } from './PostActions';
+import { PostComments } from './PostComments';
 import './PostCard.css';
 
 interface PostCardProps {
@@ -89,7 +92,6 @@ const PostCard = memo(({ post: initialPost, currentUser, onPostUpdated, onPostDe
     if (!window.confirm("Are you sure you want to delete this comment?")) return;
     try {
       await api.deleteComment(commentId);
-      // Remove comment locally
       const updatedPost = { ...post, comments: post.comments.filter(c => c.id !== commentId) };
       setPost(updatedPost);
       if (onPostUpdated) onPostUpdated(updatedPost);
@@ -112,56 +114,29 @@ const PostCard = memo(({ post: initialPost, currentUser, onPostUpdated, onPostDe
   return (
     <>
       <article className="post-card glass-panel animate-fade-in">
-        <div className="post-header">
-          <div className="post-user-info" onClick={() => navigateToProfile(post.createdBy?.id)} style={{ cursor: 'pointer' }}>
-            <div className="avatar-ring">
-              <img src={avatarUrl} alt={username} className="avatar-img" />
-            </div>
-            <div className="user-meta">
-              <span className="username">{username}</span>
-              <span className="time-ago">{timeAgo}</span>
-            </div>
-          </div>
-          <div className="action-group">
-            {isPostOwner && (
-              <button className="btn-icon" onClick={handleDeletePost} title="Delete Post">
-                <Trash2 size={20} className="text-danger" />
-              </button>
-            )}
-            <button className="btn-icon">
-              <MoreHorizontal size={20} />
-            </button>
-          </div>
-        </div>
+        <PostHeader
+          username={username}
+          avatarUrl={avatarUrl}
+          timeAgo={timeAgo}
+          isPostOwner={isPostOwner ?? false}
+          onNavigateToProfile={() => navigateToProfile(post.createdBy?.id)}
+          onDeletePost={handleDeletePost}
+        />
         
         <div className="post-image-container" onClick={() => setIsZoomed(true)}>
           <img src={post.imageUrl} alt="Post content" className="post-image" />
         </div>
         
-        <div className="post-actions">
-          <div className="action-group">
-            <button 
-              className={`btn-icon action-btn like-btn ${hasLiked ? 'liked' : ''}`}
-              onClick={handleLikeToggle}
-              disabled={!currentUser || isLiking}
-            >
-              <Heart size={24} fill={hasLiked ? 'currentColor' : 'none'} />
-            </button>
-            <button className="btn-icon action-btn" onClick={() => setShowComments(!showComments)}>
-              <MessageCircle size={24} />
-            </button>
-            <button className="btn-icon action-btn">
-              <Share2 size={24} />
-            </button>
-          </div>
-          <button 
-            className={`btn-icon action-btn save-btn ${hasSaved ? 'saved' : ''}`}
-            onClick={handleSaveToggle}
-            disabled={!currentUser || isSaving}
-          >
-            <Bookmark size={24} fill={hasSaved ? 'currentColor' : 'none'} />
-          </button>
-        </div>
+        <PostActions
+          hasLiked={hasLiked ?? false}
+          hasSaved={hasSaved ?? false}
+          currentUser={currentUser}
+          isLiking={isLiking}
+          isSaving={isSaving}
+          onLikeToggle={handleLikeToggle}
+          onSaveToggle={handleSaveToggle}
+          onToggleComments={() => setShowComments(!showComments)}
+        />
         
         <div className="post-content">
           <div className="likes-count">
@@ -179,42 +154,16 @@ const PostCard = memo(({ post: initialPost, currentUser, onPostUpdated, onPostDe
           )}
 
           {showComments && (
-            <div className="comments-section animate-fade-in">
-              <div className="comments-list">
-                {post.comments?.map(c => (
-                  <div key={c.id} className="comment-item" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                    <div>
-                      <span className="username font-bold" onClick={() => navigateToProfile(c.createdBy?.id)} style={{ cursor: 'pointer' }}>{c.createdBy?.username || 'Unknown'}</span>
-                      <span className="comment-text" style={{ marginLeft: '8px' }}>{c.comment}</span>
-                    </div>
-                    {currentUser && c.createdBy?.username === currentUser.username && (
-                      <button className="btn-icon" onClick={() => handleDeleteComment(c.id)} title="Delete Comment" style={{ padding: '0 4px' }}>
-                        <X size={14} className="text-danger" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-              {currentUser && (
-                <form className="comment-form" onSubmit={submitComment}>
-                  <input
-                    type="text"
-                    placeholder="Add a comment..."
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                    disabled={isCommenting}
-                    maxLength={2000}
-                  />
-                  <button 
-                    type="submit" 
-                    className="post-comment-btn" 
-                    disabled={!commentText.trim() || isCommenting}
-                  >
-                    <Send size={18} />
-                  </button>
-                </form>
-              )}
-            </div>
+            <PostComments
+              comments={post.comments}
+              currentUser={currentUser}
+              commentText={commentText}
+              isCommenting={isCommenting}
+              onCommentTextChange={setCommentText}
+              onSubmitComment={submitComment}
+              onDeleteComment={handleDeleteComment}
+              onNavigateToProfile={navigateToProfile}
+            />
           )}
         </div>
       </article>

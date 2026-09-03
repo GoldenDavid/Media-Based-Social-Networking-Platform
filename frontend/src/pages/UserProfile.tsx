@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { api, type ProfileDto, type PostDto } from '../services/api';
 import PostCard from '../components/PostCard';
 import FollowButton from '../components/FollowButton';
+import { ProfileGrid } from '../components/ProfileGrid';
 import './Profile.css';
 
 const UserProfile = () => {
@@ -141,21 +142,7 @@ const UserProfile = () => {
         )}
       </div>
       
-      <div className="profile-grid">
-        {(activeTab === 'POSTS' ? posts : savedPosts).length === 0 ? (
-          <div className="empty-state">No posts yet.</div>
-        ) : (
-          (activeTab === 'POSTS' ? posts : savedPosts).map((post) => (
-            <div key={post.id} className="grid-item" onClick={() => setSelectedPost(post)} style={{ cursor: 'pointer' }}>
-              <img src={post.imageUrl} alt={`Post ${post.id}`} />
-              <div className="grid-item-overlay">
-                <span>❤️ {post.userLikes?.length || 0}</span>
-                <span>💬 {post.comments?.length || 0}</span>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
+      <ProfileGrid posts={activeTab === 'POSTS' ? posts : savedPosts} onSelectPost={setSelectedPost} />
     </div>
 
       {selectedPost && (
